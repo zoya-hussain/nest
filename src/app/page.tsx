@@ -13,6 +13,9 @@ export default function BookmarkApp() {
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
   
+  const deleteBookmark = (id: string) => {
+    setBookmarks(bookmarks.filter(bookmark => bookmark.id !== id))
+  }
 
   const addBookmark = () => {
     if (!title || !url) return
@@ -73,6 +76,12 @@ export default function BookmarkApp() {
             <p className="text-sm text-gray-500 mt-2">
               Added: {bookmark.createdAt.toLocaleDateString()}
             </p>
+            <button 
+              onClick={() => deleteBookmark(bookmark.id)}
+              className="bg-red-500 text-white px-3 py-1 h-fit mt-2"
+            >
+              Delete
+            </button>
           </div>
         ))}
       </div>
