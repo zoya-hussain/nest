@@ -8,8 +8,6 @@ import {
   DialogHeader,
   DialogFooter,
   DialogTitle,
-  DialogDescription,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,7 +22,6 @@ import {
 import { CalendarIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { v4 as uuid } from "uuid";
-import { hr } from "date-fns/locale";
 
 type Bookmark = {
   id: string;
@@ -33,6 +30,7 @@ type Bookmark = {
   folder: string;
   remindAt: Date;
   createdAt: Date;
+  tags: string[];
 };
 
 export default function BookmarkApp() {
@@ -43,6 +41,9 @@ export default function BookmarkApp() {
   const [folder, setFolder] = useState("General");
   const [folders, setFolders] = useState(["General"]);
   const [remindAt, setRemindAt] = useState<Date | undefined>(undefined);
+  const [tags, setTags] = useState<string[]>([]); 
+  const [tagInput, setTagInput] = useState("");
+  const [selectedTag, setSelectedTag] = useState<string | null>(null); 
 
   const handlePaste = useCallback((e: ClipboardEvent) => {
     const text = e.clipboardData?.getData("text");
@@ -82,11 +83,14 @@ export default function BookmarkApp() {
       folder,
       remindAt,
       createdAt: new Date(),
+      tags,
     };
     setBookmarks([newBm, ...bookmarks]);
     setTitle("");
     setUrl("");
     setRemindAt(undefined);
+    setTags([]);
+    setTagInput("");
     setModalOpen(false);
   };
 
@@ -102,9 +106,31 @@ export default function BookmarkApp() {
     setBookmarks(bookmarks.filter((b) => b.id !== id));
   };
 
+  const visibleBookmarks = selectedTag
+    ? bookmarks.filter((b) => b.tags.includes(selectedTag))
+    : bookmarks;
+
   return (
     <div className="min-h-screen bg-white p-6">
       <h1 className="text-2xl font-bold mb-4">Bookmarks</h1>
+
+      <div className="flex gap-2 mb-4 flex-wrap">
+        <Button
+          variant={selectedTag === null ? "default" : "outline"}
+          onClick={() => setSelectedTag(null)}
+        >
+          All Tags
+        </Button>
+        {[...new Set(bookmarks.flatMap((b) => b.tags))].map((tag) => (
+          <Button
+            key={tag}
+            variant={selectedTag === tag ? "default" : "outline"}
+            onClick={() => setSelectedTag(tag)}
+          >
+            #{tag}
+          </Button>
+        ))}
+      </div>
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-md">
@@ -117,9 +143,7 @@ export default function BookmarkApp() {
               <Input
                 id="title"
                 value={title}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setTitle(e.target.value)
-                }
+                onChange={(e) => setTitle(e.target.value)}
               />
             </div>
             <div>
@@ -127,9 +151,7 @@ export default function BookmarkApp() {
               <Input
                 id="url"
                 value={url}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setUrl(e.target.value)
-                }
+                onChange={(e) => setUrl(e.target.value)}
               />
             </div>
             <div>
@@ -165,6 +187,41 @@ export default function BookmarkApp() {
                 <DatePicker date={remindAt} setDate={setRemindAt} />
               </div>
             </div>
+
+            <div>
+              <Label htmlFor="tags">Tags</Label>
+              <Input
+                id="tags"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const trimmed = tagInput.trim();
+                    if (trimmed && !tags.includes(trimmed)) {
+                      setTags((prev) => [...prev, trimmed]);
+                    }
+                    setTagInput("");
+                  }
+                }}
+                placeholder="Press Enter to add"
+              />
+              <div className="flex flex-wrap gap-1 mt-2">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    onClick={() => setTags(tags.filter((t) => t !== tag))}
+                    className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full cursor-pointer"
+                  >
+                    {tag} ✕
+                  </span>
+                ))}
+              </div>
+
+              <p className="text-xs text-gray-400 mt-1">
+                Current tags: {tags.join(", ")}
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalOpen(false)}>
@@ -176,7 +233,7 @@ export default function BookmarkApp() {
       </Dialog>
 
       <div className="space-y-4 mt-8">
-        {bookmarks.map((b) => (
+        {visibleBookmarks.map((b) => (
           <div key={b.id} className="border p-4 rounded-lg shadow-sm">
             <div className="flex justify-between items-start">
               <div>
@@ -192,6 +249,17 @@ export default function BookmarkApp() {
                   Folder: {b.folder} • Added: {b.createdAt.toLocaleDateString()}{" "}
                   • Remind: {b.remindAt.toLocaleDateString()}
                 </p>
+
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {b.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
               </div>
               <Button
                 size="icon"
@@ -204,8 +272,9 @@ export default function BookmarkApp() {
           </div>
         ))}
       </div>
+
       <p className="mt-4 text-gray-600">
-        You have {bookmarks.length} bookmarks
+        You have {visibleBookmarks.length} bookmarks
       </p>
     </div>
   );
