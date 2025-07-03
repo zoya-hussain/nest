@@ -24,6 +24,7 @@ import {
 import { CalendarIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { v4 as uuid } from "uuid";
+import { hr } from "date-fns/locale";
 
 type Bookmark = {
   id: string;
