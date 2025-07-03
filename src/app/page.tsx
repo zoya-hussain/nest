@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogFooter,
@@ -41,9 +40,11 @@ export default function BookmarkApp() {
   const [folder, setFolder] = useState("General");
   const [folders, setFolders] = useState(["General"]);
   const [remindAt, setRemindAt] = useState<Date | undefined>(undefined);
-  const [tags, setTags] = useState<string[]>([]); 
+  const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [selectedTag, setSelectedTag] = useState<string | null>(null); 
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handlePaste = useCallback((e: ClipboardEvent) => {
     const text = e.clipboardData?.getData("text");
@@ -106,7 +107,17 @@ export default function BookmarkApp() {
     setBookmarks(bookmarks.filter((b) => b.id !== id));
   };
 
-  const visibleBookmarks = selectedTag
+  const visibleBookmarks = searchQuery
+    ? bookmarks.filter((b) => {
+        const search = searchQuery.toLowerCase();
+        return (
+          b.title.toLowerCase().includes(search) ||
+          b.url.toLowerCase().includes(search) ||
+          b.tags.some((tag) => tag.toLowerCase().includes(search)) ||
+          b.folder.toLowerCase().includes(search)
+        );
+      })
+    : selectedTag
     ? bookmarks.filter((b) => b.tags.includes(selectedTag))
     : bookmarks;
 
@@ -114,23 +125,35 @@ export default function BookmarkApp() {
     <div className="min-h-screen bg-white p-6">
       <h1 className="text-2xl font-bold mb-4">Bookmarks</h1>
 
-      <div className="flex gap-2 mb-4 flex-wrap">
-        <Button
-          variant={selectedTag === null ? "default" : "outline"}
-          onClick={() => setSelectedTag(null)}
-        >
-          All Tags
-        </Button>
-        {[...new Set(bookmarks.flatMap((b) => b.tags))].map((tag) => (
+      <Input
+        type="text"
+        placeholder="Search bookmarks..."
+        value={searchQuery}
+        onChange={(e) => {
+          setSearchQuery(e.target.value);
+          setSelectedTag(null);
+        }}
+        className="mb-4 max-w-md"
+      />
+      {searchQuery === "" && (
+        <div className="flex gap-2 mb-4 flex-wrap">
           <Button
-            key={tag}
-            variant={selectedTag === tag ? "default" : "outline"}
-            onClick={() => setSelectedTag(tag)}
+            variant={selectedTag === null ? "default" : "outline"}
+            onClick={() => setSelectedTag(null)}
           >
-            #{tag}
+            All Tags
           </Button>
-        ))}
-      </div>
+          {[...new Set(bookmarks.flatMap((b) => b.tags))].map((tag) => (
+            <Button
+              key={tag}
+              variant={selectedTag === tag ? "default" : "outline"}
+              onClick={() => setSelectedTag(tag)}
+            >
+              #{tag}
+            </Button>
+          ))}
+        </div>
+      )}
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-md">
@@ -187,7 +210,6 @@ export default function BookmarkApp() {
                 <DatePicker date={remindAt} setDate={setRemindAt} />
               </div>
             </div>
-
             <div>
               <Label htmlFor="tags">Tags</Label>
               <Input
@@ -217,10 +239,6 @@ export default function BookmarkApp() {
                   </span>
                 ))}
               </div>
-
-              <p className="text-xs text-gray-400 mt-1">
-                Current tags: {tags.join(", ")}
-              </p>
             </div>
           </div>
           <DialogFooter>
@@ -249,7 +267,6 @@ export default function BookmarkApp() {
                   Folder: {b.folder} • Added: {b.createdAt.toLocaleDateString()}{" "}
                   • Remind: {b.remindAt.toLocaleDateString()}
                 </p>
-
                 <div className="flex flex-wrap gap-1 mt-1">
                   {b.tags.map((tag) => (
                     <span
@@ -274,7 +291,8 @@ export default function BookmarkApp() {
       </div>
 
       <p className="mt-4 text-gray-600">
-        You have {visibleBookmarks.length} bookmarks
+        Showing {visibleBookmarks.length} bookmark
+        {visibleBookmarks.length !== 1 && "s"}
       </p>
     </div>
   );
