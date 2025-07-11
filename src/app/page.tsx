@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
 import { CalendarIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { v4 as uuid } from "uuid";
+import { Toaster, toast } from "sonner";
 
 type Bookmark = {
   id: string;
@@ -47,6 +48,7 @@ export default function BookmarkApp() {
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const lastAction = useRef<any>(null);
 
   const handlePaste = useCallback((e: ClipboardEvent) => {
     const text = e.clipboardData?.getData("text");
@@ -122,8 +124,35 @@ export default function BookmarkApp() {
     }
   };
 
-  const deleteBookmark = (id: string) => {
-    setBookmarks(bookmarks.filter((b) => b.id !== id));
+  const undoLastAction = () => {
+    const action = lastAction.current;
+    if (!action) return;
+
+    if (action.type === "delete") {
+      setBookmarks((prev) => [action.bookmark, ...prev]);
+    } else if (action.type === "archive") {
+      setBookmarks((prev) =>
+        prev.map((b) =>
+          b.id === action.bookmark.id
+            ? { ...b, isArchived: action.oldArchived }
+            : b
+        )
+      );
+    }
+    toast.success("Undone!");
+    lastAction.current = null;
+  };
+
+  const deleteBookmark = (bm: Bookmark) => {
+    lastAction.current = { type: "delete", bookmark: bm };
+    setBookmarks((prev) => prev.filter((b) => b.id !== bm.id));
+
+    toast("Bookmark deleted", {
+      action: {
+        label: "Undo",
+        onClick: () => undoLastAction(),
+      },
+    });
   };
 
   const visibleBookmarks = (
@@ -153,6 +182,7 @@ export default function BookmarkApp() {
 
   return (
     <div className="min-h-screen bg-white p-6">
+      <Toaster position="top-right" />
       <h1 className="text-2xl font-bold mb-4">Bookmarks</h1>
 
       <Input
@@ -359,13 +389,25 @@ export default function BookmarkApp() {
                 size="icon"
                 variant="ghost"
                 onClick={() => {
-                  setBookmarks(
-                    bookmarks.map((bm) =>
-                      bm.id === b.id
-                        ? { ...bm, isArchived: !bm.isArchived }
-                        : bm
+                  const newArchived = !(b.isArchived ?? false);
+                  lastAction.current = {
+                    type: "archive",
+                    bookmark: b,
+                    oldArchived: b.isArchived ?? false,
+                  };
+
+                  setBookmarks((prev) =>
+                    prev.map((bm) =>
+                      bm.id === bm.id ? { ...bm, isArchived: newArchived } : bm
                     )
                   );
+
+                  toast(`Bookmark ${newArchived ? "archived" : "unarchived"}`, {
+                    action: {
+                      label: "Undo",
+                      onClick: () => undoLastAction(),
+                    },
+                  });
                 }}
               >
                 {b.isArchived ? "Unarchive" : "Archive"}
@@ -390,7 +432,7 @@ export default function BookmarkApp() {
               <Button
                 size="icon"
                 variant="ghost"
-                onClick={() => deleteBookmark(b.id)}
+                onClick={() => deleteBookmark(b)}
               >
                 <Trash2Icon />
               </Button>
