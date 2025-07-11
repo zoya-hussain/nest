@@ -49,6 +49,7 @@ export default function BookmarkApp() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const lastAction = useRef<any>(null);
+  const searchRef = useRef<HTMLInputElement | null>(null);
 
   const handlePaste = useCallback((e: ClipboardEvent) => {
     const text = e.clipboardData?.getData("text");
@@ -79,22 +80,20 @@ export default function BookmarkApp() {
       );
   }, []);
 
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "/" && !modalOpen) {
         e.preventDefault();
-        setEditingBookmark(null);
-        setTitle("");
-        setUrl("");
-        setRemindAt(undefined);
-        setFolder("General");
-        setTags([]);
-        setModalOpen(true);
+        searchRef.current?.focus();
       }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, []);
+    },
+    [modalOpen]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   useEffect(() => {
     localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
@@ -203,6 +202,7 @@ export default function BookmarkApp() {
       <h1 className="text-2xl font-bold mb-4">Bookmarks</h1>
 
       <Input
+        ref={searchRef}
         type="text"
         placeholder="Search bookmarks..."
         value={searchQuery}
