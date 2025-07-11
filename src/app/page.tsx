@@ -51,6 +51,32 @@ export default function BookmarkApp() {
   const lastAction = useRef<any>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
 
+  // Move visibleBookmarks up here
+  const visibleBookmarks = (
+    searchQuery
+      ? bookmarks.filter((b) => {
+          const search = searchQuery.toLowerCase();
+          return (
+            b.title.toLowerCase().includes(search) ||
+            b.url.toLowerCase().includes(search) ||
+            b.tags.some((tag) => tag.toLowerCase().includes(search)) ||
+            b.folder.toLowerCase().includes(search)
+          );
+        })
+      : selectedTag
+      ? bookmarks.filter((b) => b.tags.includes(selectedTag))
+      : bookmarks
+  )
+    .filter((b) => (showArchived ? b.isArchived : !b.isArchived))
+    .slice()
+    .sort((a, b) => {
+      if (sortOrder === "newest") {
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      } else {
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      }
+    });
+
   const handlePaste = useCallback((e: ClipboardEvent) => {
     const text = e.clipboardData?.getData("text");
     if (text && (text.startsWith("http") || text.startsWith("www"))) {
@@ -86,8 +112,20 @@ export default function BookmarkApp() {
         e.preventDefault();
         searchRef.current?.focus();
       }
+      if ((e.key === "Delete" || e.key === "Backspace") && !modalOpen) {
+        e.preventDefault();
+        if (visibleBookmarks.length > 0) {
+          const b = visibleBookmarks[0];
+          setBookmarks(
+            bookmarks.map((bm) =>
+              bm.id === b.id ? { ...bm, isArchived: !bm.isArchived } : bm
+            )
+          );
+          toast(`Bookmark ${b.isArchived ? "unarchived" : "archived"}`);
+        }
+      }
     },
-    [modalOpen]
+    [modalOpen, bookmarks, visibleBookmarks]
   );
 
   useEffect(() => {
@@ -170,31 +208,6 @@ export default function BookmarkApp() {
       },
     });
   };
-
-  const visibleBookmarks = (
-    searchQuery
-      ? bookmarks.filter((b) => {
-          const search = searchQuery.toLowerCase();
-          return (
-            b.title.toLowerCase().includes(search) ||
-            b.url.toLowerCase().includes(search) ||
-            b.tags.some((tag) => tag.toLowerCase().includes(search)) ||
-            b.folder.toLowerCase().includes(search)
-          );
-        })
-      : selectedTag
-      ? bookmarks.filter((b) => b.tags.includes(selectedTag))
-      : bookmarks
-  )
-    .filter((b) => (showArchived ? b.isArchived : !b.isArchived))
-    .slice()
-    .sort((a, b) => {
-      if (sortOrder === "newest") {
-        return b.createdAt.getTime() - a.createdAt.getTime();
-      } else {
-        return a.createdAt.getTime() - b.createdAt.getTime();
-      }
-    });
 
   return (
     <div className="min-h-screen bg-white p-6">
@@ -415,7 +428,7 @@ export default function BookmarkApp() {
 
                   setBookmarks((prev) =>
                     prev.map((bm) =>
-                      bm.id === bm.id ? { ...bm, isArchived: newArchived } : bm
+                      bm.id === b.id ? { ...bm, isArchived: newArchived } : bm
                     )
                   );
 
