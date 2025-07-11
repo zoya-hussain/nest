@@ -112,6 +112,14 @@ export default function BookmarkApp() {
         e.preventDefault();
         searchRef.current?.focus();
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+        e.preventDefault();
+        if (lastAction.current) {
+          lastAction.current();
+          toast("Undo successful!");
+          lastAction.current = null;
+        }
+      }
       if ((e.key === "Delete" || e.key === "Backspace") && !modalOpen) {
         e.preventDefault();
         if (visibleBookmarks.length > 0) {
@@ -197,14 +205,18 @@ export default function BookmarkApp() {
     lastAction.current = null;
   };
 
-  const deleteBookmark = (bm: Bookmark) => {
-    lastAction.current = { type: "delete", bookmark: bm };
-    setBookmarks((prev) => prev.filter((b) => b.id !== bm.id));
-
-    toast("Bookmark deleted", {
+  const deleteBookmark = (b: Bookmark) => {
+    setBookmarks(bookmarks.filter((bm) => bm.id !== b.id));
+    lastAction.current = () => {
+      setBookmarks([b, ...bookmarks]);
+    };
+    toast("Deleted bookmark", {
       action: {
         label: "Undo",
-        onClick: () => undoLastAction(),
+        onClick: () => {
+          lastAction.current?.();
+          lastAction.current = null;
+        },
       },
     });
   };
@@ -419,23 +431,23 @@ export default function BookmarkApp() {
                 size="icon"
                 variant="ghost"
                 onClick={() => {
-                  const newArchived = !(b.isArchived ?? false);
-                  lastAction.current = {
-                    type: "archive",
-                    bookmark: b,
-                    oldArchived: b.isArchived ?? false,
-                  };
-
-                  setBookmarks((prev) =>
-                    prev.map((bm) =>
-                      bm.id === b.id ? { ...bm, isArchived: newArchived } : bm
-                    )
+                  setBookmarks(
+                    bookmarks.map((bm) =>
+                    bm.id === b.id ? { ...bm, isArchived: !bm.isArchived} : bm)
                   );
-
-                  toast(`Bookmark ${newArchived ? "archived" : "unarchived"}`, {
+                  lastAction.current = () => {
+                    setBookmarks(
+                      bookmarks.map((bm) => 
+                      bm.id === b.id ? { ...bm, isArchived: b.isArchived} : bm)
+                    );
+                  };
+                  toast(b.isArchived ? "Unarchived" : "Archived", {
                     action: {
                       label: "Undo",
-                      onClick: () => undoLastAction(),
+                      onClick: () => {
+                        lastAction.current?.();
+                        lastAction.current = null;
+                      },
                     },
                   });
                 }}
