@@ -80,6 +80,23 @@ export default function BookmarkApp() {
   }, []);
 
   useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+        e.preventDefault();
+        setEditingBookmark(null);
+        setTitle("");
+        setUrl("");
+        setRemindAt(undefined);
+        setFolder("General");
+        setTags([]);
+        setModalOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
   }, [bookmarks]);
 
@@ -255,7 +272,7 @@ export default function BookmarkApp() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editingBookmark ? "Edit Bookmark" : "Save Bookmar"}
+              {editingBookmark ? "Edit Bookmark" : "Save Bookmark"}
             </DialogTitle>
           </DialogHeader>
 
