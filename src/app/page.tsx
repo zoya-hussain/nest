@@ -43,6 +43,7 @@ export default function BookmarkApp() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -107,7 +108,7 @@ export default function BookmarkApp() {
     setBookmarks(bookmarks.filter((b) => b.id !== id));
   };
 
-  const visibleBookmarks = searchQuery
+  const visibleBookmarks = (searchQuery
     ? bookmarks.filter((b) => {
         const search = searchQuery.toLowerCase();
         return (
@@ -119,7 +120,14 @@ export default function BookmarkApp() {
       })
     : selectedTag
     ? bookmarks.filter((b) => b.tags.includes(selectedTag))
-    : bookmarks;
+    : bookmarks
+  ).slice().sort((a, b) => {
+    if (sortOrder === "newest") {
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    } else {
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    }
+  });
 
   return (
     <div className="min-h-screen bg-white p-6">
@@ -154,6 +162,16 @@ export default function BookmarkApp() {
           ))}
         </div>
       )}
+
+      <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as "newest" | "oldest")}>
+        <SelectTrigger className="w-[200px] mb-4">
+          <SelectValue placeholder="Sort by" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="newest">Newest to Oldest</SelectItem>
+          <SelectItem value="oldest">Oldest to Newest</SelectItem>
+        </SelectContent>
+      </Select>
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-md">
