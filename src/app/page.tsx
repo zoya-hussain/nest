@@ -120,6 +120,9 @@ export default function BookmarkApp() {
           lastAction.current = null;
         }
       }
+      if (e.key === "Escape") {
+        setModalOpen(false);
+      }
       if ((e.key === "Delete" || e.key === "Backspace") && !modalOpen) {
         e.preventDefault();
         if (visibleBookmarks.length > 0) {
