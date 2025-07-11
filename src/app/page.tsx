@@ -52,6 +52,10 @@ export default function BookmarkApp() {
     const text = e.clipboardData?.getData("text");
     if (text && (text.startsWith("http") || text.startsWith("www"))) {
       setUrl(text);
+      setTitle("");
+      setRemindAt(undefined);
+      setFolder("General");
+      setTags([]);
       setModalOpen(true);
     }
   }, []);
@@ -221,17 +225,102 @@ export default function BookmarkApp() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editingBookmark ? "Edit Bookmark" : "Save Bookmark"}
+              {editingBookmark ? "Edit Bookmark" : "Save Bookmar"}
             </DialogTitle>
           </DialogHeader>
+
           <div className="space-y-4">
+            <div>
+              <label htmlFor="title">Name</label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="url">URL</label>
+              <Input
+                id="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="folder">Folder</label>
+              <Select
+                onValueChange={(v: string) => {
+                  if (v === "__add") {
+                    addFolder();
+                  } else {
+                    setFolder(v);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select folder" />
+                </SelectTrigger>
+                <SelectContent>
+                  {folders.map((f) => (
+                    <SelectItem key={f} value={f}>
+                      {" "}
+                      {f}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="__add">
+                    <PlusIcon className="mr-2 inline" /> Add folder ...
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label htmlFor="remind">Remind me on</label>
+              <div className="flex items-center space-x-2">
+                <CalendarIcon />
+                <DatePicker date={remindAt} setDate={setRemindAt} />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="tags">Tags</label>
+              <Input
+                id="tags"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const trimmed = tagInput.trim();
+                    if (trimmed && !tags.includes(trimmed)) {
+                      setTags((prev) => [...prev, trimmed]);
+                    }
+                    setTagInput("");
+                  }
+                }}
+                placeholder="Press Enter to add"
+              />
+              <div className="flex flex-wrap gap-1 mt-2">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    onClick={() => setTags(tags.filter((t) => t !== tag))}
+                    className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full cursor-pointer"
+                  >
+                    {tag} ✕
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalOpen(false)}>
               Cancel
             </Button>
             <Button onClick={saveBookmark}>
-              {editingBookmark ? "Save Changes" : "Save"}
+              {editingBookmark ? "Save Changed" : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -272,7 +361,9 @@ export default function BookmarkApp() {
                 onClick={() => {
                   setBookmarks(
                     bookmarks.map((bm) =>
-                      bm.id === b.id ? { ...bm, isArchived: !bm.isArchived } : bm
+                      bm.id === b.id
+                        ? { ...bm, isArchived: !bm.isArchived }
+                        : bm
                     )
                   );
                 }}
