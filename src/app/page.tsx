@@ -44,7 +44,7 @@ export default function BookmarkApp() {
   const [tagInput, setTagInput] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
-
+  const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const handlePaste = useCallback((e: ClipboardEvent) => {
@@ -76,18 +76,30 @@ export default function BookmarkApp() {
     localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
   }, [bookmarks]);
 
-  const addBookmark = () => {
+  const saveBookmark = () => {
     if (!title || !url || !remindAt) return;
-    const newBm: Bookmark = {
-      id: uuid(),
-      title,
-      url,
-      folder,
-      remindAt,
-      createdAt: new Date(),
-      tags,
-    };
-    setBookmarks([newBm, ...bookmarks]);
+
+    if (editingBookmark) {
+      const updated = bookmarks.map((b) =>
+        b.id === editingBookmark.id
+          ? { ...b, title, url, folder, remindAt, tags }
+          : b
+      );
+      setBookmarks(updated);
+      setEditingBookmark(null);
+    } else {
+      const newBm: Bookmark = {
+        id: uuid(),
+        title,
+        url,
+        folder,
+        remindAt,
+        createdAt: new Date(),
+        tags,
+      };
+      setBookmarks([newBm, ...bookmarks]);
+    }
+
     setTitle("");
     setUrl("");
     setRemindAt(undefined);
@@ -173,10 +185,26 @@ export default function BookmarkApp() {
         </SelectContent>
       </Select>
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <Dialog
+        open={modalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open);
+          if (!open) {
+            setEditingBookmark(null);
+            setTitle("");
+            setUrl("");
+            setFolder("General");
+            setRemindAt(undefined);
+            setTags([]);
+            setTagInput("");
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Save Bookmark</DialogTitle>
+            <DialogTitle>
+              {editingBookmark ? "Edit Bookmark" : "Save Bookmark"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -263,7 +291,9 @@ export default function BookmarkApp() {
             <Button variant="outline" onClick={() => setModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={addBookmark}>Save</Button>
+            <Button onClick={saveBookmark}>
+              {editingBookmark ? "Save Changes" : "Save"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -296,6 +326,21 @@ export default function BookmarkApp() {
                   ))}
                 </div>
               </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  setEditingBookmark(b);
+                  setTitle(b.title);
+                  setUrl(b.url);
+                  setFolder(b.folder);
+                  setRemindAt(b.remindAt);
+                  setTags(b.tags);
+                  setModalOpen(true);
+                }}
+              >
+                ↳
+              </Button>
               <Button
                 size="icon"
                 variant="ghost"
