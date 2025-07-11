@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectTrigger,
@@ -30,6 +29,7 @@ type Bookmark = {
   remindAt: Date;
   createdAt: Date;
   tags: string[];
+  isArchived?: boolean;
 };
 
 export default function BookmarkApp() {
@@ -46,6 +46,7 @@ export default function BookmarkApp() {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
 
   const handlePaste = useCallback((e: ClipboardEvent) => {
     const text = e.clipboardData?.getData("text");
@@ -95,6 +96,7 @@ export default function BookmarkApp() {
         folder,
         remindAt,
         createdAt: new Date(),
+        isArchived: false,
         tags,
       };
       setBookmarks([newBm, ...bookmarks]);
@@ -120,26 +122,30 @@ export default function BookmarkApp() {
     setBookmarks(bookmarks.filter((b) => b.id !== id));
   };
 
-  const visibleBookmarks = (searchQuery
-    ? bookmarks.filter((b) => {
-        const search = searchQuery.toLowerCase();
-        return (
-          b.title.toLowerCase().includes(search) ||
-          b.url.toLowerCase().includes(search) ||
-          b.tags.some((tag) => tag.toLowerCase().includes(search)) ||
-          b.folder.toLowerCase().includes(search)
-        );
-      })
-    : selectedTag
-    ? bookmarks.filter((b) => b.tags.includes(selectedTag))
-    : bookmarks
-  ).slice().sort((a, b) => {
-    if (sortOrder === "newest") {
-      return b.createdAt.getTime() - a.createdAt.getTime();
-    } else {
-      return a.createdAt.getTime() - b.createdAt.getTime();
-    }
-  });
+  const visibleBookmarks = (
+    searchQuery
+      ? bookmarks.filter((b) => {
+          const search = searchQuery.toLowerCase();
+          return (
+            b.title.toLowerCase().includes(search) ||
+            b.url.toLowerCase().includes(search) ||
+            b.tags.some((tag) => tag.toLowerCase().includes(search)) ||
+            b.folder.toLowerCase().includes(search)
+          );
+        })
+      : selectedTag
+      ? bookmarks.filter((b) => b.tags.includes(selectedTag))
+      : bookmarks
+  )
+    .filter((b) => (showArchived ? b.isArchived : !b.isArchived))
+    .slice()
+    .sort((a, b) => {
+      if (sortOrder === "newest") {
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      } else {
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      }
+    });
 
   return (
     <div className="min-h-screen bg-white p-6">
@@ -155,6 +161,7 @@ export default function BookmarkApp() {
         }}
         className="mb-4 max-w-md"
       />
+
       {searchQuery === "" && (
         <div className="flex gap-2 mb-4 flex-wrap">
           <Button
@@ -175,7 +182,10 @@ export default function BookmarkApp() {
         </div>
       )}
 
-      <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as "newest" | "oldest")}>
+      <Select
+        value={sortOrder}
+        onValueChange={(v) => setSortOrder(v as "newest" | "oldest")}
+      >
         <SelectTrigger className="w-[200px] mb-4">
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>
@@ -184,6 +194,14 @@ export default function BookmarkApp() {
           <SelectItem value="oldest">Oldest to Newest</SelectItem>
         </SelectContent>
       </Select>
+
+      <Button
+        variant="outline"
+        onClick={() => setShowArchived(!showArchived)}
+        className="ml-4"
+      >
+        {showArchived ? "Show Active" : "Show Archived"}
+      </Button>
 
       <Dialog
         open={modalOpen}
@@ -207,85 +225,6 @@ export default function BookmarkApp() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="title">Name</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="url">URL</Label>
-              <Input
-                id="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="folder">Folder</Label>
-              <Select
-                onValueChange={(v: string) => {
-                  if (v === "__add") {
-                    addFolder();
-                  } else {
-                    setFolder(v);
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select folder" />
-                </SelectTrigger>
-                <SelectContent>
-                  {folders.map((f) => (
-                    <SelectItem key={f} value={f}>
-                      {f}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="__add">
-                    <PlusIcon className="mr-2 inline" /> Add folder...
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="remind">Remind me on</Label>
-              <div className="flex items-center space-x-2">
-                <CalendarIcon />
-                <DatePicker date={remindAt} setDate={setRemindAt} />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="tags">Tags</Label>
-              <Input
-                id="tags"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const trimmed = tagInput.trim();
-                    if (trimmed && !tags.includes(trimmed)) {
-                      setTags((prev) => [...prev, trimmed]);
-                    }
-                    setTagInput("");
-                  }
-                }}
-                placeholder="Press Enter to add"
-              />
-              <div className="flex flex-wrap gap-1 mt-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    onClick={() => setTags(tags.filter((t) => t !== tag))}
-                    className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full cursor-pointer"
-                  >
-                    {tag} ✕
-                  </span>
-                ))}
-              </div>
-            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalOpen(false)}>
@@ -326,6 +265,21 @@ export default function BookmarkApp() {
                   ))}
                 </div>
               </div>
+
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  setBookmarks(
+                    bookmarks.map((bm) =>
+                      bm.id === b.id ? { ...bm, isArchived: !bm.isArchived } : bm
+                    )
+                  );
+                }}
+              >
+                {b.isArchived ? "Unarchive" : "Archive"}
+              </Button>
+
               <Button
                 size="icon"
                 variant="ghost"
@@ -341,6 +295,7 @@ export default function BookmarkApp() {
               >
                 ↳
               </Button>
+
               <Button
                 size="icon"
                 variant="ghost"
