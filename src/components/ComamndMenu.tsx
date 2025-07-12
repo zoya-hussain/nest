@@ -2,6 +2,14 @@
 
 import * as React from "react";
 import { Command } from "cmdk";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from "@/components/ui/dialog"
 
 type Bookmark = {
   id: string;
@@ -37,14 +45,37 @@ export default function CommandMenu({
 }: CommandMenuProps) {
   const [search, setSearch] = React.useState("");
 
+  const filteredBookmarks = bookmarks.filter((b) =>
+    b.title.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredFolders = folders.filter((f) =>
+    f.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredTags = tags.filter((t) =>
+    t.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <Command.Dialog open={open} onOpenChange={setOpen} label="Command Menu">
-      <Command.Input placeholder="Search bookmarks, tags, folders ..." />
-      <Command.List>
+    <Command.Dialog
+      className="bg-white rounded-md shadow-lg p-4 w-[500px] max-w-full mx-auto mt-20"
+      open={open}
+      onOpenChange={setOpen}
+      label="Command Menu"
+    >
+    <DialogTitle>erm title lolz</DialogTitle>
+
+      <Command.Input
+        className="border-b w-full p-2 mb-2"
+        placeholder="Search bookmarks, tags, folders ..."
+      />
+      <Command.List className="max-h-[300px] overflow-y-auto">
         <Command.Empty>No results found.</Command.Empty>
         <Command.Group heading="Bookmarks">
           {bookmarks.map((bm) => (
             <Command.Item
+              className="p-2 hover:bg-gray-100 cursor-pointer"
               key={bm.id}
               onSelect={() => {
                 onSelectBookmark(bm);
@@ -59,6 +90,7 @@ export default function CommandMenu({
         <Command.Group heading="Folders">
           {folders.map((f) => (
             <Command.Item
+              className="p-2 hover:bg-gray-100 cursor-pointer"
               key={f}
               onSelect={() => {
                 onFilterFolder(f);
@@ -73,6 +105,7 @@ export default function CommandMenu({
         <Command.Group heading="Tags">
           {tags.map((tag) => (
             <Command.Item
+              className="p-2 hover:bg-gray-100 cursor-pointer"
               key={tag}
               onSelect={() => {
                 onFilterTag(tag);

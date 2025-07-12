@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import CommandMenu from "@/components/ComamndMenu";
+import { Bookmark } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -21,17 +23,6 @@ import { CalendarIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { v4 as uuid } from "uuid";
 import { Toaster, toast } from "sonner";
-
-type Bookmark = {
-  id: string;
-  title: string;
-  url: string;
-  folder: string;
-  remindAt: Date;
-  createdAt: Date;
-  tags: string[];
-  isArchived?: boolean;
-};
 
 function usePersistentState<T>(key: string, initial: T) {
   const [value, setValue] = useState<T>(initial);
@@ -78,7 +69,8 @@ export default function BookmarkApp() {
   const [showArchived, setShowArchived] = useState(false);
   const lastAction = useRef<any>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
-
+  const [cmdOpen, setCmdOpen] = useState(false);
+  
   const visibleBookmarks = (
     searchQuery
       ? bookmarks.filter((b) => {
@@ -137,6 +129,13 @@ export default function BookmarkApp() {
         e.preventDefault();
         searchRef.current?.focus();
       }
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCmdOpen((prev) => !prev);
+      }
+
+
       if ((e.metaKey || e.ctrlKey) && e.key === "z") {
         e.preventDefault();
         if (lastAction.current) {
@@ -233,6 +232,31 @@ export default function BookmarkApp() {
 
   return (
     <div className="min-h-screen bg-white p-6">
+      <CommandMenu
+        open={cmdOpen}
+        setOpen={setCmdOpen}
+        bookmarks={bookmarks}
+        folders={folders}
+        tags={globalTags}
+        onSelectBookmark={(bm) => {
+          setEditingBookmark(bm);
+          setTitle(bm.title);
+          setUrl(bm.url);
+          setFolder(bm.folder);
+          setRemindAt(bm.remindAt);
+          setTags(bm.tags);
+          setModalOpen(true);
+        }}
+        onFilterFolder={(folder) => {
+          setSearchQuery("");
+          setSelectedTag(null);
+          setFolder(folder);
+        }}
+        onFilterTag={(tag) => {
+          setSearchQuery("");
+          setSelectedTag(tag);
+        }}
+      />
       <Toaster position="top-right" />
       <h1 className="text-2xl font-bold mb-4">Bookmarks</h1>
 
