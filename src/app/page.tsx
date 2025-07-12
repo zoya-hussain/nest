@@ -444,10 +444,11 @@ export default function BookmarkApp() {
                 size="icon"
                 variant="ghost"
                 onClick={() => {
+                  const newArchived = !b.isArchived;
                   setBookmarks(
                     bookmarks.map((bm) =>
                       bm.id === b.id
-                        ? { ...bm, isArchived: !bm.isArchived }
+                        ? { ...bm, isArchived: newArchived }
                         : bm
                     )
                   );
@@ -460,7 +461,7 @@ export default function BookmarkApp() {
                       )
                     );
                   };
-                  toast(b.isArchived ? "Unarchived" : "Archived", {
+                  toast(newArchived ? "Archived" : "Unarchived", {
                     action: {
                       label: "Undo",
                       onClick: () => {
