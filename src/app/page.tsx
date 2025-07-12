@@ -33,13 +33,41 @@ type Bookmark = {
   isArchived?: boolean;
 };
 
+function usePersistentState<T>(key: string, initial: T) {
+  const [value, setValue] = useState<T>(initial);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        setValue(JSON.parse(saved));
+      } catch {
+        setValue(initial);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [value]);
+
+  return [value, setValue] as const;
+}
+
 export default function BookmarkApp() {
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [bookmarks, setBookmarks] = usePersistentState<Bookmark[]>(
+    "bookmarks",
+    []
+  );
+  const [folders, setFolders] = usePersistentState<string[]>("folders", [
+    "General",
+  ]);
+  const [globalTags, setGlobalTags] = usePersistentState<string[]>("tags", []);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [folder, setFolder] = useState("General");
-  const [folders, setFolders] = useState(["General"]);
   const [remindAt, setRemindAt] = useState<Date | undefined>(undefined);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
@@ -51,7 +79,6 @@ export default function BookmarkApp() {
   const lastAction = useRef<any>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
 
-  // Move visibleBookmarks up here
   const visibleBookmarks = (
     searchQuery
       ? bookmarks.filter((b) => {
@@ -95,15 +122,13 @@ export default function BookmarkApp() {
   }, [handlePaste]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("bookmarks");
-    if (saved)
-      setBookmarks(
-        JSON.parse(saved).map((b: any) => ({
-          ...b,
-          createdAt: new Date(b.createdAt),
-          remindAt: new Date(b.remindAt),
-        }))
-      );
+    setBookmarks((prev) =>
+      prev.map((b) => ({
+        ...b,
+        createdAt: new Date(b.createdAt),
+        remindAt: new Date(b.remindAt),
+      }))
+    );
   }, []);
 
   const handleKeyDown = useCallback(
@@ -144,10 +169,6 @@ export default function BookmarkApp() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  useEffect(() => {
-    localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
-  }, [bookmarks]);
-
   const saveBookmark = () => {
     if (!title || !url || !remindAt) return;
 
@@ -172,6 +193,11 @@ export default function BookmarkApp() {
       };
       setBookmarks([newBm, ...bookmarks]);
     }
+    tags.forEach((t) => {
+      if (!globalTags.includes(t)) {
+        setGlobalTags([...globalTags, t]);
+      }
+    });
 
     setTitle("");
     setUrl("");
@@ -187,25 +213,6 @@ export default function BookmarkApp() {
       setFolders([...folders, name]);
       setFolder(name);
     }
-  };
-
-  const undoLastAction = () => {
-    const action = lastAction.current;
-    if (!action) return;
-
-    if (action.type === "delete") {
-      setBookmarks((prev) => [action.bookmark, ...prev]);
-    } else if (action.type === "archive") {
-      setBookmarks((prev) =>
-        prev.map((b) =>
-          b.id === action.bookmark.id
-            ? { ...b, isArchived: action.oldArchived }
-            : b
-        )
-      );
-    }
-    toast.success("Undone!");
-    lastAction.current = null;
   };
 
   const deleteBookmark = (b: Bookmark) => {
@@ -249,7 +256,7 @@ export default function BookmarkApp() {
           >
             All Tags
           </Button>
-          {[...new Set(bookmarks.flatMap((b) => b.tags))].map((tag) => (
+          {globalTags.map((tag) => (
             <Button
               key={tag}
               variant={selectedTag === tag ? "default" : "outline"}
@@ -326,6 +333,7 @@ export default function BookmarkApp() {
             <div>
               <label htmlFor="folder">Folder</label>
               <Select
+                value={folder}
                 onValueChange={(v: string) => {
                   if (v === "__add") {
                     addFolder();
@@ -340,7 +348,6 @@ export default function BookmarkApp() {
                 <SelectContent>
                   {folders.map((f) => (
                     <SelectItem key={f} value={f}>
-                      {" "}
                       {f}
                     </SelectItem>
                   ))}
@@ -371,6 +378,9 @@ export default function BookmarkApp() {
                     const trimmed = tagInput.trim();
                     if (trimmed && !tags.includes(trimmed)) {
                       setTags((prev) => [...prev, trimmed]);
+                      if (!globalTags.includes(trimmed)) {
+                        setGlobalTags([...globalTags, trimmed]);
+                      }
                     }
                     setTagInput("");
                   }
@@ -436,12 +446,18 @@ export default function BookmarkApp() {
                 onClick={() => {
                   setBookmarks(
                     bookmarks.map((bm) =>
-                    bm.id === b.id ? { ...bm, isArchived: !bm.isArchived} : bm)
+                      bm.id === b.id
+                        ? { ...bm, isArchived: !bm.isArchived }
+                        : bm
+                    )
                   );
                   lastAction.current = () => {
                     setBookmarks(
-                      bookmarks.map((bm) => 
-                      bm.id === b.id ? { ...bm, isArchived: b.isArchived} : bm)
+                      bookmarks.map((bm) =>
+                        bm.id === b.id
+                          ? { ...bm, isArchived: b.isArchived }
+                          : bm
+                      )
                     );
                   };
                   toast(b.isArchived ? "Unarchived" : "Archived", {
