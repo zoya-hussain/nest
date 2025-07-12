@@ -3,13 +3,11 @@
 import * as React from "react";
 import { Command } from "cmdk";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-  } from "@/components/ui/dialog"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Bookmark = {
   id: string;
@@ -58,65 +56,74 @@ export default function CommandMenu({
   );
 
   return (
-    <Command.Dialog
-      className="bg-white rounded-md shadow-lg p-4 w-[500px] max-w-full mx-auto mt-20"
-      open={open}
-      onOpenChange={setOpen}
-      label="Command Menu"
-    >
-    <DialogTitle>erm title lolz</DialogTitle>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent
+        className="p-0 overflow-hidden bg-white rounded-xl shadow-2xl w-full max-w-lg"
+      >
+        <DialogHeader>
+          <DialogTitle className="sr-only">Command Menu</DialogTitle>
+        </DialogHeader>
 
-      <Command.Input
-        className="border-b w-full p-2 mb-2"
-        placeholder="Search bookmarks, tags, folders ..."
-      />
-      <Command.List className="max-h-[300px] overflow-y-auto">
-        <Command.Empty>No results found.</Command.Empty>
-        <Command.Group heading="Bookmarks">
-          {bookmarks.map((bm) => (
-            <Command.Item
-              className="p-2 hover:bg-gray-100 cursor-pointer"
-              key={bm.id}
-              onSelect={() => {
-                onSelectBookmark(bm);
-                setOpen(false);
-              }}
-            >
-              🔖 {bm.title}
-            </Command.Item>
-          ))}
-        </Command.Group>
+        <Command className="w-full">
+          <Command.Input
+            autoFocus
+            value={search}
+            onValueChange={setSearch}
+            placeholder="Search bookmarks, folders, tags..."
+            className="w-full border-b p-4 outline-none"
+          />
+          <Command.List className="max-h-[300px] overflow-y-auto">
+            <Command.Empty className="p-4 text-sm text-gray-500">
+              No results found.
+            </Command.Empty>
 
-        <Command.Group heading="Folders">
-          {folders.map((f) => (
-            <Command.Item
-              className="p-2 hover:bg-gray-100 cursor-pointer"
-              key={f}
-              onSelect={() => {
-                onFilterFolder(f);
-                setOpen(false);
-              }}
-            >
-              📂 {f}{" "}
-            </Command.Item>
-          ))}
-        </Command.Group>
+            <Command.Group heading="Bookmarks">
+              {filteredBookmarks.map((bm) => (
+                <Command.Item
+                  key={bm.id}
+                  className="p-4 cursor-pointer hover:bg-gray-100"
+                  onSelect={() => {
+                    onSelectBookmark(bm);
+                    setOpen(false);
+                  }}
+                >
+                  🔖 {bm.title}
+                </Command.Item>
+              ))}
+            </Command.Group>
 
-        <Command.Group heading="Tags">
-          {tags.map((tag) => (
-            <Command.Item
-              className="p-2 hover:bg-gray-100 cursor-pointer"
-              key={tag}
-              onSelect={() => {
-                onFilterTag(tag);
-                setOpen(false);
-              }}
-            >
-              🏷️ #{tag}
-            </Command.Item>
-          ))}
-        </Command.Group>
-      </Command.List>
-    </Command.Dialog>
+            <Command.Group heading="Folders">
+              {filteredFolders.map((f) => (
+                <Command.Item
+                  key={f}
+                  className="p-4 cursor-pointer hover:bg-gray-100"
+                  onSelect={() => {
+                    onFilterFolder(f);
+                    setOpen(false);
+                  }}
+                >
+                  📂 {f}
+                </Command.Item>
+              ))}
+            </Command.Group>
+
+            <Command.Group heading="Tags">
+              {filteredTags.map((tag) => (
+                <Command.Item
+                  key={tag}
+                  className="p-4 cursor-pointer hover:bg-gray-100"
+                  onSelect={() => {
+                    onFilterTag(tag);
+                    setOpen(false);
+                  }}
+                >
+                  🏷️ #{tag}
+                </Command.Item>
+              ))}
+            </Command.Group>
+          </Command.List>
+        </Command>
+      </DialogContent>
+    </Dialog>
   );
 }
