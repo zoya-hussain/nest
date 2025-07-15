@@ -70,7 +70,8 @@ export default function BookmarkApp() {
   const lastAction = useRef<any>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
-  
+  const [notes, setNotes] = useState("");
+
   const visibleBookmarks = (
     searchQuery
       ? bookmarks.filter((b) => {
@@ -135,7 +136,6 @@ export default function BookmarkApp() {
         setCmdOpen((prev) => !prev);
       }
 
-
       if ((e.metaKey || e.ctrlKey) && e.key === "z") {
         e.preventDefault();
         if (lastAction.current) {
@@ -174,7 +174,7 @@ export default function BookmarkApp() {
     if (editingBookmark) {
       const updated = bookmarks.map((b) =>
         b.id === editingBookmark.id
-          ? { ...b, title, url, folder, remindAt, tags }
+          ? { ...b, title, url, folder, remindAt, tags, notes }
           : b
       );
       setBookmarks(updated);
@@ -189,6 +189,7 @@ export default function BookmarkApp() {
         createdAt: new Date(),
         isArchived: false,
         tags,
+        notes,
       };
       setBookmarks([newBm, ...bookmarks]);
     }
@@ -245,6 +246,7 @@ export default function BookmarkApp() {
           setFolder(bm.folder);
           setRemindAt(bm.remindAt);
           setTags(bm.tags);
+          setNotes(bm.notes || "");
           setModalOpen(true);
         }}
         onFilterFolder={(folder) => {
@@ -325,6 +327,7 @@ export default function BookmarkApp() {
             setRemindAt(undefined);
             setTags([]);
             setTagInput("");
+            setNotes("");
           }
         }}
       >
@@ -423,6 +426,17 @@ export default function BookmarkApp() {
                 ))}
               </div>
             </div>
+            <div>
+              <label htmlFor="notes">Notes</label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full p-2 border rounded-md"
+                rows={3}
+                placeholder="Add any notes about this bookmark..."
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalOpen(false)}>
@@ -462,6 +476,9 @@ export default function BookmarkApp() {
                     </span>
                   ))}
                 </div>
+                {b.notes && (
+                  <p className="text-sm text-gray-600 mt-2 italic">{b.notes}</p>
+                )}
               </div>
 
               <Button
@@ -471,9 +488,7 @@ export default function BookmarkApp() {
                   const newArchived = !b.isArchived;
                   setBookmarks(
                     bookmarks.map((bm) =>
-                      bm.id === b.id
-                        ? { ...bm, isArchived: newArchived }
-                        : bm
+                      bm.id === b.id ? { ...bm, isArchived: newArchived } : bm
                     )
                   );
                   lastAction.current = () => {

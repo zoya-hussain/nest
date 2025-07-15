@@ -7,4 +7,5 @@ export type Bookmark = {
   createdAt: Date;
   tags: string[];
   isArchived?: boolean;
+  notes?: string;
 }; 

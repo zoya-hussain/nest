@@ -8,17 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-type Bookmark = {
-  id: string;
-  title: string;
-  url: string;
-  folder: string;
-  remindAt: Date;
-  createdAt: Date;
-  tags: string[];
-  isArchived?: boolean;
-};
+import { Bookmark } from "@/types";
 
 type CommandMenuProps = {
   open: boolean;
