@@ -57,9 +57,7 @@ export default function CommandMenu({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent
-        className="p-0 overflow-hidden bg-white rounded-xl shadow-2xl w-full max-w-lg"
-      >
+      <DialogContent className="p-0 overflow-hidden bg-white rounded-xl shadow-2xl w-full max-w-lg">
         <DialogHeader>
           <DialogTitle className="sr-only">Command Menu</DialogTitle>
         </DialogHeader>
