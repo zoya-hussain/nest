@@ -257,362 +257,401 @@ export default function BookmarkApp() {
   };
 
   return (
-    <div className="min-h-screen bg-white p-6">
-      <CommandMenu
-        open={cmdOpen}
-        setOpen={setCmdOpen}
-        bookmarks={bookmarks}
-        folders={folders}
-        tags={globalTags}
-        onSelectBookmark={(bm) => {
-          setEditingBookmark(bm);
-          setTitle(bm.title);
-          setUrl(bm.url);
-          setFolder(bm.folder);
-          setRemindAt(bm.remindAt);
-          setTags(bm.tags);
-          setNotes(bm.notes || "");
-          setModalOpen(true);
-        }}
-        onFilterFolder={(folder) => {
-          setSearchQuery("");
-          setSelectedTag(null);
-          setFolder(folder);
-        }}
-        onFilterTag={(tag) => {
-          setSearchQuery("");
-          setSelectedTag(tag);
-        }}
-      />
-      <Toaster position="top-right" />
-      <h1 className="text-2xl font-bold mb-4">Bookmarks</h1>
-
-      <Input
-        ref={searchRef}
-        type="text"
-        placeholder="Search bookmarks..."
-        value={searchQuery}
-        onChange={(e) => {
-          setSearchQuery(e.target.value);
-          setSelectedTag(null);
-        }}
-        className="mb-4 max-w-md"
-      />
-
-      {searchQuery === "" && (
-        <div className="flex gap-2 mb-4 flex-wrap">
-          <Button
-            variant={selectedTag === null ? "default" : "outline"}
-            onClick={() => setSelectedTag(null)}
-          >
-            All Tags
+    <div className="flex min-h-screen">
+      <aside className="w-64 bg-gray-50 border-r p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold">Folders</h2>
+          <Button variant="ghost" size="icon" onClick={addFolder}>
+            <PlusIcon className="w-4 h-4" />
           </Button>
-          {globalTags.map((tag) => (
-            <Button
-              key={tag}
-              variant={selectedTag === tag ? "default" : "outline"}
-              onClick={() => setSelectedTag(tag)}
-            >
-              #{tag}
-            </Button>
-          ))}
+
+          <div className="space-y-2">
+            {folders.map((f) => (
+              <Button
+                key={f}
+                variant={folder === f ? "default" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedTag(null);
+                  setFolder(f);
+                }}
+              >
+                {f}
+              </Button>
+            ))}
+          </div>
         </div>
-      )}
+      </aside>
+      <main className="flex-1 p-6">
+        <div className="min-h-screen bg-white p-6">
+          <CommandMenu
+            open={cmdOpen}
+            setOpen={setCmdOpen}
+            bookmarks={bookmarks}
+            folders={folders}
+            tags={globalTags}
+            onSelectBookmark={(bm) => {
+              setEditingBookmark(bm);
+              setTitle(bm.title);
+              setUrl(bm.url);
+              setFolder(bm.folder);
+              setRemindAt(bm.remindAt);
+              setTags(bm.tags);
+              setNotes(bm.notes || "");
+              setModalOpen(true);
+            }}
+            onFilterFolder={(folder) => {
+              setSearchQuery("");
+              setSelectedTag(null);
+              setFolder(folder);
+            }}
+            onFilterTag={(tag) => {
+              setSearchQuery("");
+              setSelectedTag(tag);
+            }}
+          />
+          <Toaster position="top-right" />
+          <h1 className="text-2xl font-bold mb-4">Bookmarks</h1>
 
-      <Select
-        value={sortOrder}
-        onValueChange={(v) => setSortOrder(v as "newest" | "oldest")}
-      >
-        <SelectTrigger className="w-[200px] mb-4">
-          <SelectValue placeholder="Sort by" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="newest">Newest to Oldest</SelectItem>
-          <SelectItem value="oldest">Oldest to Newest</SelectItem>
-        </SelectContent>
-      </Select>
+          <Input
+            ref={searchRef}
+            type="text"
+            placeholder="Search bookmarks..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setSelectedTag(null);
+            }}
+            className="mb-4 max-w-md"
+          />
 
-      <Button
-        variant="outline"
-        onClick={() => setShowArchived(!showArchived)}
-        className="ml-4"
-      >
-        {showArchived ? "Show Active" : "Show Archived"}
-      </Button>
-
-      <Dialog
-        open={modalOpen}
-        onOpenChange={(open) => {
-          setModalOpen(open);
-          if (!open) {
-            setEditingBookmark(null);
-            setTitle("");
-            setUrl("");
-            setFolder("General");
-            setRemindAt(undefined);
-            setTags([]);
-            setTagInput("");
-            setNotes("");
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editingBookmark ? "Edit Bookmark" : "Save Bookmark"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="title">Name</label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="url">URL</label>
-              <Input
-                id="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="folder">Folder</label>
-              <Select
-                value={folder}
-                onValueChange={(v: string) => {
-                  if (v === "__add") {
-                    addFolder();
-                  } else {
-                    setFolder(v);
-                  }
-                }}
+          {searchQuery === "" && (
+            <div className="flex gap-2 mb-4 flex-wrap">
+              <Button
+                variant={selectedTag === null ? "default" : "outline"}
+                onClick={() => setSelectedTag(null)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select folder" />
-                </SelectTrigger>
-                <SelectContent>
-                  {folders.map((f) => (
-                    <SelectItem key={f} value={f}>
-                      {f}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="__add">
-                    <PlusIcon className="mr-2 inline" /> Add folder ...
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label htmlFor="remind">Remind me on</label>
-              <div className="flex items-center space-x-2">
-                <CalendarIcon />
-                <DatePicker date={remindAt} setDate={setRemindAt} />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="tags">Tags</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start">
-                    {tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">
-                        Select of create tags...
-                      </span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-0">
-                  <Command>
-                    <CommandInput
-                      placeholder="Search tags..."
-                      value={tagInput}
-                      onValueChange={setTagInput}
-                    />
-
-                    <CommandList>
-                      {globalTags.length === 0 && (
-                        <CommandEmpty>No Tags Found.</CommandEmpty>
-                      )}
-                      {globalTags.map((tag) => (
-                        <CommandItem
-                          key={tag}
-                          value={tag}
-                          onSelect={() => {
-                            if (tags.includes(tag)) {
-                              setTags(tags.filter((t) => t !== tag));
-                            } else {
-                              setTags([...tags, tag]);
-                            }
-                          }}
-                          className="flex justify-between"
-                        >
-                          <span>#{tag}</span>
-                          {tags.includes(tag) && <Check className="h-4 w-4" />}
-                        </CommandItem>
-                      ))}
-                      {tagInput.trim().length > 0 &&
-                        !globalTags.includes(tagInput.trim()) && (
-                          <CommandItem
-                            onSelect={() => {
-                              const trimmed = tagInput.trim();
-                              if (trimmed) {
-                                setTags([...tags, trimmed]);
-                                if (!globalTags.includes(trimmed)) {
-                                  setGlobalTags([...globalTags, trimmed]);
-                                }
-                                setTagInput("");
-                              }
-                            }}
-                          >
-                            + Add "{tagInput.trim()}"
-                          </CommandItem>
-                        )}
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div>
-              <label htmlFor="notes">Notes</label>
-              <textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full p-2 border rounded-md"
-                rows={3}
-                placeholder="Add any notes about this bookmark..."
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={saveBookmark}>
-              {editingBookmark ? "Save Changed" : "Save"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <div className="space-y-4 mt-8">
-        {visibleBookmarks.map((b) => (
-          <div key={b.id} className="border p-4 rounded-lg shadow-sm">
-            <div className="flex justify-between items-start">
-              <div>
-                <a
-                  href={b.url}
-                  target="_blank"
-                  className="text-lg font-semibold text-blue-600 underline"
+                All Tags
+              </Button>
+              {globalTags.map((tag) => (
+                <Button
+                  key={tag}
+                  variant={selectedTag === tag ? "default" : "outline"}
+                  onClick={() => setSelectedTag(tag)}
                 >
-                  {b.title}
-                </a>
-                <p className="text-sm text-gray-500">{b.url}</p>
-                <p className="text-xs text-gray-400">
-                  Folder: {b.folder} • Added: {b.createdAt.toLocaleDateString()}{" "}
-                  • Remind: {b.remindAt.toLocaleDateString()}
-                </p>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {b.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-                {b.notes && (
-                  <p className="text-sm text-gray-600 mt-2 italic">{b.notes}</p>
-                )}
-              </div>
-
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => {
-                  const newArchived = !b.isArchived;
-                  setBookmarks(
-                    bookmarks.map((bm) =>
-                      bm.id === b.id ? { ...bm, isArchived: newArchived } : bm
-                    )
-                  );
-                  lastAction.current = () => {
-                    setBookmarks(
-                      bookmarks.map((bm) =>
-                        bm.id === b.id
-                          ? { ...bm, isArchived: b.isArchived }
-                          : bm
-                      )
-                    );
-                  };
-                  toast(newArchived ? "Archived" : "Unarchived", {
-                    action: {
-                      label: "Undo",
-                      onClick: () => {
-                        lastAction.current?.();
-                        lastAction.current = null;
-                      },
-                    },
-                  });
-                }}
-              >
-                {b.isArchived ? "Unarchive" : "Archive"}
-              </Button>
-
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => {
-                  setEditingBookmark(b);
-                  setTitle(b.title);
-                  setUrl(b.url);
-                  setFolder(b.folder);
-                  setRemindAt(b.remindAt);
-                  setTags(b.tags);
-                  setModalOpen(true);
-                }}
-              >
-                ↳
-              </Button>
-
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => deleteBookmark(b)}
-              >
-                <Trash2Icon />
-              </Button>
+                  #{tag}
+                </Button>
+              ))}
             </div>
-          </div>
-        ))}
-      </div>
+          )}
 
-      <p className="mt-4 text-gray-600">
-        Showing {visibleBookmarks.length} bookmark
-        {visibleBookmarks.length !== 1 && "s"}
-      </p>
+          <Select
+            value={sortOrder}
+            onValueChange={(v) => setSortOrder(v as "newest" | "oldest")}
+          >
+            <SelectTrigger className="w-[200px] mb-4">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest to Oldest</SelectItem>
+              <SelectItem value="oldest">Oldest to Newest</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant="outline"
+            onClick={() => setShowArchived(!showArchived)}
+            className="ml-4"
+          >
+            {showArchived ? "Show Active" : "Show Archived"}
+          </Button>
+
+          <Dialog
+            open={modalOpen}
+            onOpenChange={(open) => {
+              setModalOpen(open);
+              if (!open) {
+                setEditingBookmark(null);
+                setTitle("");
+                setUrl("");
+                setFolder("General");
+                setRemindAt(undefined);
+                setTags([]);
+                setTagInput("");
+                setNotes("");
+              }
+            }}
+          >
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingBookmark ? "Edit Bookmark" : "Save Bookmark"}
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="title">Name</label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="url">URL</label>
+                  <Input
+                    id="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="folder">Folder</label>
+                  <Select
+                    value={folder}
+                    onValueChange={(v: string) => {
+                      if (v === "__add") {
+                        addFolder();
+                      } else {
+                        setFolder(v);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select folder" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {folders.map((f) => (
+                        <SelectItem key={f} value={f}>
+                          {f}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__add">
+                        <PlusIcon className="mr-2 inline" /> Add folder ...
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label htmlFor="remind">Remind me on</label>
+                  <div className="flex items-center space-x-2">
+                    <CalendarIcon />
+                    <DatePicker date={remindAt} setDate={setRemindAt} />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="tags">Tags</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                      >
+                        {tags.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">
+                            Select of create tags...
+                          </span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search tags..."
+                          value={tagInput}
+                          onValueChange={setTagInput}
+                        />
+
+                        <CommandList>
+                          {globalTags.length === 0 && (
+                            <CommandEmpty>No Tags Found.</CommandEmpty>
+                          )}
+                          {globalTags.map((tag) => (
+                            <CommandItem
+                              key={tag}
+                              value={tag}
+                              onSelect={() => {
+                                if (tags.includes(tag)) {
+                                  setTags(tags.filter((t) => t !== tag));
+                                } else {
+                                  setTags([...tags, tag]);
+                                }
+                              }}
+                              className="flex justify-between"
+                            >
+                              <span>#{tag}</span>
+                              {tags.includes(tag) && (
+                                <Check className="h-4 w-4" />
+                              )}
+                            </CommandItem>
+                          ))}
+                          {tagInput.trim().length > 0 &&
+                            !globalTags.includes(tagInput.trim()) && (
+                              <CommandItem
+                                onSelect={() => {
+                                  const trimmed = tagInput.trim();
+                                  if (trimmed) {
+                                    setTags([...tags, trimmed]);
+                                    if (!globalTags.includes(trimmed)) {
+                                      setGlobalTags([...globalTags, trimmed]);
+                                    }
+                                    setTagInput("");
+                                  }
+                                }}
+                              >
+                                + Add "{tagInput.trim()}"
+                              </CommandItem>
+                            )}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div>
+                  <label htmlFor="notes">Notes</label>
+                  <textarea
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="w-full p-2 border rounded-md"
+                    rows={3}
+                    placeholder="Add any notes about this bookmark..."
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={saveBookmark}>
+                  {editingBookmark ? "Save Changed" : "Save"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <div className="space-y-4 mt-8">
+            {visibleBookmarks.map((b) => (
+              <div key={b.id} className="border p-4 rounded-lg shadow-sm">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <a
+                      href={b.url}
+                      target="_blank"
+                      className="text-lg font-semibold text-blue-600 underline"
+                    >
+                      {b.title}
+                    </a>
+                    <p className="text-sm text-gray-500">{b.url}</p>
+                    <p className="text-xs text-gray-400">
+                      Folder: {b.folder} • Added:{" "}
+                      {b.createdAt.toLocaleDateString()} • Remind:{" "}
+                      {b.remindAt.toLocaleDateString()}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {b.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                    {b.notes && (
+                      <p className="text-sm text-gray-600 mt-2 italic">
+                        {b.notes}
+                      </p>
+                    )}
+                  </div>
+
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      const newArchived = !b.isArchived;
+                      setBookmarks(
+                        bookmarks.map((bm) =>
+                          bm.id === b.id
+                            ? { ...bm, isArchived: newArchived }
+                            : bm
+                        )
+                      );
+                      lastAction.current = () => {
+                        setBookmarks(
+                          bookmarks.map((bm) =>
+                            bm.id === b.id
+                              ? { ...bm, isArchived: b.isArchived }
+                              : bm
+                          )
+                        );
+                      };
+                      toast(newArchived ? "Archived" : "Unarchived", {
+                        action: {
+                          label: "Undo",
+                          onClick: () => {
+                            lastAction.current?.();
+                            lastAction.current = null;
+                          },
+                        },
+                      });
+                    }}
+                  >
+                    {b.isArchived ? "Unarchive" : "Archive"}
+                  </Button>
+
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingBookmark(b);
+                      setTitle(b.title);
+                      setUrl(b.url);
+                      setFolder(b.folder);
+                      setRemindAt(b.remindAt);
+                      setTags(b.tags);
+                      setModalOpen(true);
+                    }}
+                  >
+                    ↳
+                  </Button>
+
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => deleteBookmark(b)}
+                  >
+                    <Trash2Icon />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-4 text-gray-600">
+            Showing {visibleBookmarks.length} bookmark
+            {visibleBookmarks.length !== 1 && "s"}
+          </p>
+        </div>
+      </main>
     </div>
   );
 }
