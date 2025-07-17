@@ -100,7 +100,7 @@ export default function BookmarkApp() {
         })
       : selectedTag
       ? bookmarks.filter((b) => b.tags.includes(selectedTag))
-      : bookmarks
+      : bookmarks.filter((b) => b.folder === folder)
   )
     .filter((b) => (showArchived ? b.isArchived : !b.isArchived))
     .slice()
