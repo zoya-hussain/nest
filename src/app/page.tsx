@@ -2,6 +2,16 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import CommandMenu from "@/components/ComamndMenu";
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+
+import { CalendarIcon, PlusIcon, Trash2Icon, Check } from "lucide-react";
+
 import { Bookmark } from "@/types";
 import {
   Dialog,
@@ -19,10 +29,15 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { CalendarIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { v4 as uuid } from "uuid";
 import { Toaster, toast } from "sonner";
+
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 
 function usePersistentState<T>(key: string, initial: T) {
   const [value, setValue] = useState<T>(initial);
@@ -216,10 +231,20 @@ export default function BookmarkApp() {
   };
 
   const deleteBookmark = (b: Bookmark) => {
-    setBookmarks(bookmarks.filter((bm) => bm.id !== b.id));
-    lastAction.current = () => {
-      setBookmarks([b, ...bookmarks]);
-    };
+    setBookmarks((currentBookmarks) => {
+      const updated = currentBookmarks.filter((bm) => bm.id !== b.id);
+      lastAction.current = () => {
+        setBookmarks((current) => {
+          if (current.some((bm) => bm.id === b.id)) {
+            return current;
+          }
+          return [b, ...current];
+        });
+      };
+
+      return updated;
+    });
+
     toast("Deleted bookmark", {
       action: {
         label: "Undo",
@@ -395,37 +420,79 @@ export default function BookmarkApp() {
 
             <div>
               <label htmlFor="tags">Tags</label>
-              <Input
-                id="tags"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const trimmed = tagInput.trim();
-                    if (trimmed && !tags.includes(trimmed)) {
-                      setTags((prev) => [...prev, trimmed]);
-                      if (!globalTags.includes(trimmed)) {
-                        setGlobalTags([...globalTags, trimmed]);
-                      }
-                    }
-                    setTagInput("");
-                  }
-                }}
-                placeholder="Press Enter to add"
-              />
-              <div className="flex flex-wrap gap-1 mt-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    onClick={() => setTags(tags.filter((t) => t !== tag))}
-                    className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full cursor-pointer"
-                  >
-                    {tag} ✕
-                  </span>
-                ))}
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    {tags.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">
+                        Select of create tags...
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search tags..."
+                      value={tagInput}
+                      onValueChange={setTagInput}
+                    />
+
+                    <CommandList>
+                      {globalTags.length === 0 && (
+                        <CommandEmpty>No Tags Found.</CommandEmpty>
+                      )}
+                      {globalTags.map((tag) => (
+                        <CommandItem
+                          key={tag}
+                          value={tag}
+                          onSelect={() => {
+                            if (tags.includes(tag)) {
+                              setTags(tags.filter((t) => t !== tag));
+                            } else {
+                              setTags([...tags, tag]);
+                            }
+                          }}
+                          className="flex justify-between"
+                        >
+                          <span>#{tag}</span>
+                          {tags.includes(tag) && <Check className="h-4 w-4" />}
+                        </CommandItem>
+                      ))}
+                      {tagInput.trim().length > 0 &&
+                        !globalTags.includes(tagInput.trim()) && (
+                          <CommandItem
+                            onSelect={() => {
+                              const trimmed = tagInput.trim();
+                              if (trimmed) {
+                                setTags([...tags, trimmed]);
+                                if (!globalTags.includes(trimmed)) {
+                                  setGlobalTags([...globalTags, trimmed]);
+                                }
+                                setTagInput("");
+                              }
+                            }}
+                          >
+                            + Add "{tagInput.trim()}"
+                          </CommandItem>
+                        )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
+
             <div>
               <label htmlFor="notes">Notes</label>
               <textarea
