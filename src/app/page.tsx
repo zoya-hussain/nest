@@ -86,6 +86,65 @@ export default function BookmarkApp() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [notes, setNotes] = useState("");
+  const exportFolder = () => {
+    const folderBookmarks = bookmarks.filter(
+      (b) => b.folder === folder && !b.isArchived
+    );
+
+    if (folderBookmarks.length === 0) {
+      toast("No bookmarks in this folder to export.");
+      return;
+    }
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>${folder} - Exported Bookmarks</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    h1 { font-size: 1.5rem; }
+    ul { list-style: none; padding: 0; }
+    li { margin-bottom: 0.75rem; }
+    a { color: #0070f3; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    p { color: #555; margin: 0.25rem 0; }
+    small { color: #999; }
+  </style>
+</head>
+<body>
+  <h1>Folder: ${folder}</h1>
+  <ul>
+    ${folderBookmarks
+      .map(
+        (b) => `
+      <li>
+        <a href="${b.url}" target="_blank">${b.title}</a><br/>
+        <p>${b.url}</p>
+        ${b.notes ? `<p><em>${b.notes}</em></p>` : ""}
+        ${
+          b.tags.length
+            ? `<p>Tags: ${b.tags.map((t) => `#${t}`).join(", ")}</p>`
+            : ""
+        }
+      </li>
+    `
+      )
+      .join("")}
+  </ul>
+</body>
+</html>
+`;
+
+    const blob = new Blob([htmlContent], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${folder.replace(/\s+/g, "_")}_bookmarks.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const visibleBookmarks = (
     searchQuery
@@ -260,7 +319,7 @@ export default function BookmarkApp() {
     <div className="flex min-h-screen">
       <aside className="w-64 bg-white border-r p-6 flex flex-col">
         <h1 className="text-xl font-bold mb-8">Bookmarks</h1>
-  
+
         <div className="flex-1 space-y-2">
           {folders.map((f) => (
             <Button
@@ -277,16 +336,13 @@ export default function BookmarkApp() {
             </Button>
           ))}
         </div>
-  
-        <Button
-          onClick={addFolder}
-          variant="outline"
-          className="w-full mt-6"
-        >
+
+        <Button onClick={addFolder} variant="outline" className="w-full mt-6">
           + New Folder
         </Button>
+        <Button onClick={exportFolder} variant="outline" className="w-full mt-2">⬇ Export Folder</Button>
       </aside>
-  
+
       <main className="flex-1 p-8 bg-gray-50 overflow-y-auto">
         <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
           <div className="flex flex-1 gap-4">
@@ -303,7 +359,7 @@ export default function BookmarkApp() {
           </div>
           <Button onClick={() => setModalOpen(true)}>+ New Bookmark</Button>
         </div>
-  
+
         {searchQuery === "" && globalTags.length > 0 && (
           <div className="flex gap-2 mb-6 flex-wrap">
             <Button
@@ -323,7 +379,7 @@ export default function BookmarkApp() {
             ))}
           </div>
         )}
-  
+
         <div className="flex items-center gap-4 mb-6 flex-wrap">
           <Select
             value={sortOrder}
@@ -337,7 +393,7 @@ export default function BookmarkApp() {
               <SelectItem value="oldest">Oldest to Newest</SelectItem>
             </SelectContent>
           </Select>
-  
+
           <Button
             variant="outline"
             onClick={() => setShowArchived(!showArchived)}
@@ -362,7 +418,8 @@ export default function BookmarkApp() {
                 </a>
                 <p className="text-sm text-gray-500">{b.url}</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Folder: {b.folder} • Added: {b.createdAt.toLocaleDateString()} • Remind: {b.remindAt.toLocaleDateString()}
+                  Folder: {b.folder} • Added: {b.createdAt.toLocaleDateString()}{" "}
+                  • Remind: {b.remindAt.toLocaleDateString()}
                 </p>
                 <div className="flex flex-wrap gap-1 mt-2">
                   {b.tags.map((tag) => (
@@ -378,7 +435,7 @@ export default function BookmarkApp() {
                   <p className="text-sm text-gray-600 mt-2 italic">{b.notes}</p>
                 )}
               </div>
-  
+
               <div className="flex gap-2">
                 <Button
                   size="icon"
@@ -393,7 +450,9 @@ export default function BookmarkApp() {
                     lastAction.current = () => {
                       setBookmarks(
                         bookmarks.map((bm) =>
-                          bm.id === b.id ? { ...bm, isArchived: b.isArchived } : bm
+                          bm.id === b.id
+                            ? { ...bm, isArchived: b.isArchived }
+                            : bm
                         )
                       );
                     };
@@ -410,7 +469,7 @@ export default function BookmarkApp() {
                 >
                   {b.isArchived ? "Unarchive" : "Archive"}
                 </Button>
-  
+
                 <Button
                   size="icon"
                   variant="ghost"
@@ -427,7 +486,7 @@ export default function BookmarkApp() {
                 >
                   ↳
                 </Button>
-  
+
                 <Button
                   size="icon"
                   variant="ghost"
@@ -439,12 +498,12 @@ export default function BookmarkApp() {
             </div>
           ))}
         </div>
-  
+
         <p className="mt-8 text-gray-600">
           Showing {visibleBookmarks.length} bookmark
           {visibleBookmarks.length !== 1 && "s"}
         </p>
-  
+
         <CommandMenu
           open={cmdOpen}
           setOpen={setCmdOpen}
@@ -471,7 +530,7 @@ export default function BookmarkApp() {
             setSelectedTag(tag);
           }}
         />
-  
+
         <Toaster position="top-right" />
       </main>
 
@@ -557,10 +616,7 @@ export default function BookmarkApp() {
               <label htmlFor="tags">Tags</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                  >
+                  <Button variant="outline" className="w-full justify-start">
                     {tags.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {tags.map((tag) => (
@@ -605,9 +661,7 @@ export default function BookmarkApp() {
                           className="flex justify-between"
                         >
                           <span>#{tag}</span>
-                          {tags.includes(tag) && (
-                            <Check className="h-4 w-4" />
-                          )}
+                          {tags.includes(tag) && <Check className="h-4 w-4" />}
                         </CommandItem>
                       ))}
                       {tagInput.trim().length > 0 &&
