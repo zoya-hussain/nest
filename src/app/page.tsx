@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import CommandMenu from "@/components/CommandMenu";
+import CommandMenu from "@/CommandMenu";
 import {
   Command,
   CommandEmpty,
@@ -259,7 +259,7 @@ export default function BookmarkApp() {
   return (
     <div className="flex min-h-screen">
       <aside className="w-64 bg-white border-r p-6 flex flex-col">
-        <h1 className="text-xl font-bold mb-8">MyBookmarks</h1>
+        <h1 className="text-xl font-bold mb-8">Bookmarks</h1>
   
         <div className="flex-1 space-y-2">
           {folders.map((f) => (
