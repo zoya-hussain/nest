@@ -10,8 +10,9 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { IconPicker } from "@/components/ui/icon-picker";
-import * as Icons from "lucide-react"
+import * as Icons from "lucide-react";
 import { CalendarIcon, PlusIcon, Trash2Icon, Check } from "lucide-react";
+import { IconName } from "lucide-react/dynamic";
 
 import { Bookmark } from "@/types";
 import {
@@ -40,9 +41,27 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 
-function Icon({ name, ...props}: {name: string; className?: string}) {
-  const LucideIcon = (Icons as any)[name] || Icons.Folder;
-  return <LucideIcon {...props} />;
+function toPascalCase(str: string) {
+  return str
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+(.)/g, (_, chr) => chr.toUpperCase())
+    .replace(/\s/g, "")
+    .replace(/^(.)/, (_, chr) => chr.toUpperCase());
+}
+
+function Icon({ name, ...props }: { name: string; className?: string }) {
+  const safeName = toPascalCase(name);
+
+  console.log(`Trying to render icon: "${safeName}"`);
+
+  const IconComponent = (Icons as any)[safeName];
+
+  if (!IconComponent) {
+    console.warn(`Icon "${safeName}" not found, falling back to Folder.`);
+    return <Icons.Folder {...props} />;
+  }
+
+  return <IconComponent {...props} />;
 }
 
 function usePersistentState<T>(key: string, initial: T) {
@@ -84,7 +103,7 @@ export default function BookmarkApp() {
   const [modalOpen, setModalOpen] = useState(false);
   const [folderModalOpen, setFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
-  const [newFolderIcon, setNewFolderIcon] = useState("Folder");
+  const [newFolderIcon, setNewFolderIcon] = useState<IconName>("folder");
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [folder, setFolder] = useState("General");
@@ -203,6 +222,15 @@ export default function BookmarkApp() {
   }, [handlePaste]);
 
   useEffect(() => {
+    setFolders((prev) =>
+      prev.map((f) => ({
+        ...f,
+        icon: f.icon === "Folder" ? "folder" : f.icon,
+      }))
+    );
+  }, []);
+
+  useEffect(() => {
     setBookmarks((prev) =>
       prev.map((b) => ({
         ...b,
@@ -297,8 +325,8 @@ export default function BookmarkApp() {
 
   const addFolder = () => {
     const name = prompt("New folder name");
-    if (name && !folders.some(f => f.name === name)) {
-      setFolders([...folders, { name, icon: "Folder" }]);
+    if (name && !folders.some((f) => f.name === name)) {
+      setFolders([...folders, { name, icon: "folder" }]);
       setFolder(name);
     }
   };
@@ -521,15 +549,11 @@ export default function BookmarkApp() {
             </div>
           ))}
         </div>
-        <p className="mt-8 text-gray-600">
-          Showing {visibleBookmarks.length} bookmark
-          {visibleBookmarks.length !== 1 && "s"}
-        </p>
         <CommandMenu
           open={cmdOpen}
           setOpen={setCmdOpen}
           bookmarks={bookmarks}
-          folders={folders.map(f => f.name)}
+          folders={folders.map((f) => f.name)}
           tags={globalTags}
           onSelectBookmark={(bm: Bookmark) => {
             setEditingBookmark(bm);
@@ -746,7 +770,10 @@ export default function BookmarkApp() {
           </div>
           <div>
             <label>Icon</label>
-            <IconPicker value={newFolderIcon} onValueChange={setNewFolderIcon} />
+            <IconPicker
+              value={newFolderIcon as IconName}
+              onValueChange={setNewFolderIcon}
+            />
           </div>
 
           <DialogFooter>
@@ -766,7 +793,7 @@ export default function BookmarkApp() {
                 ]);
                 setFolder(newFolderName);
                 setNewFolderName("");
-                setNewFolderIcon("Folder");
+                setNewFolderIcon("folder");
                 setFolderModalOpen(false);
               }}
             >
