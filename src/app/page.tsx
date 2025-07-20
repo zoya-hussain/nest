@@ -9,7 +9,8 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-
+import { IconPicker } from "@/components/ui/icon-picker";
+import * as Icons from "lucide-react"
 import { CalendarIcon, PlusIcon, Trash2Icon, Check } from "lucide-react";
 
 import { Bookmark } from "@/types";
@@ -39,6 +40,11 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 
+function Icon({ name, ...props}: {name: string; className?: string}) {
+  const LucideIcon = (Icons as any)[name] || Icons.Folder;
+  return <LucideIcon {...props} />;
+}
+
 function usePersistentState<T>(key: string, initial: T) {
   const [value, setValue] = useState<T>(initial);
 
@@ -61,16 +67,24 @@ function usePersistentState<T>(key: string, initial: T) {
 }
 
 export default function BookmarkApp() {
+  type Folder = {
+    name: string;
+    icon: string;
+  };
+
+  const [folders, setFolders] = usePersistentState<Folder[]>("folders", [
+    { name: "General", icon: "Folder" },
+  ]);
   const [bookmarks, setBookmarks] = usePersistentState<Bookmark[]>(
     "bookmarks",
     []
   );
-  const [folders, setFolders] = usePersistentState<string[]>("folders", [
-    "General",
-  ]);
   const [globalTags, setGlobalTags] = usePersistentState<string[]>("tags", []);
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [folderModalOpen, setFolderModalOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderIcon, setNewFolderIcon] = useState("Folder");
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [folder, setFolder] = useState("General");
@@ -283,8 +297,8 @@ export default function BookmarkApp() {
 
   const addFolder = () => {
     const name = prompt("New folder name");
-    if (name && !folders.includes(name)) {
-      setFolders([...folders, name]);
+    if (name && !folders.some(f => f.name === name)) {
+      setFolders([...folders, { name, icon: "Folder" }]);
       setFolder(name);
     }
   };
@@ -317,33 +331,46 @@ export default function BookmarkApp() {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="w-64 bg-white border-r p-6 flex flex-col">
-        <h1 className="text-xl font-bold mb-8">Bookmarks</h1>
+      <aside className="w-64 bg-white border-r p-6 flex flex-col ">
+        <h1 className="text-s font-bold mb-8">Bookmarks</h1>
 
         <div className="flex-1 space-y-2">
           {folders.map((f) => (
             <Button
-              key={f}
-              variant={folder === f ? "default" : "ghost"}
+              key={f.name}
+              variant={folder === f.name ? "default" : "ghost"}
               className="w-full justify-start"
               onClick={() => {
                 setSearchQuery("");
                 setSelectedTag(null);
-                setFolder(f);
+                setFolder(f.name);
               }}
             >
-              {f}
+              <Icon name={f.icon} className="h-4 w-4" />
+              {f.name}
             </Button>
           ))}
         </div>
 
-        <Button onClick={addFolder} variant="outline" className="w-full mt-6">
-          + New Folder
+        <Button
+          onClick={() => setFolderModalOpen(true)}
+          variant="outline"
+          className="w-full mt-6"
+        >
+          New Folder
         </Button>
-        <Button onClick={exportFolder} variant="outline" className="w-full mt-2">⬇ Export Folder</Button>
+
+        <Button
+          onClick={exportFolder}
+          variant="outline"
+          className="w-full mt-2"
+        >
+          Export Folder
+        </Button>
       </aside>
 
       <main className="flex-1 p-8 bg-gray-50 overflow-y-auto">
+        {" "}
         <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
           <div className="flex flex-1 gap-4">
             <Input
@@ -355,11 +382,9 @@ export default function BookmarkApp() {
                 setSelectedTag(null);
               }}
             />
-            <Button variant="outline">Filter</Button>
           </div>
           <Button onClick={() => setModalOpen(true)}>+ New Bookmark</Button>
         </div>
-
         {searchQuery === "" && globalTags.length > 0 && (
           <div className="flex gap-2 mb-6 flex-wrap">
             <Button
@@ -379,7 +404,6 @@ export default function BookmarkApp() {
             ))}
           </div>
         )}
-
         <div className="flex items-center gap-4 mb-6 flex-wrap">
           <Select
             value={sortOrder}
@@ -401,7 +425,6 @@ export default function BookmarkApp() {
             {showArchived ? "Show Active" : "Show Archived"}
           </Button>
         </div>
-
         <div className="space-y-4">
           {visibleBookmarks.map((b) => (
             <div
@@ -498,17 +521,15 @@ export default function BookmarkApp() {
             </div>
           ))}
         </div>
-
         <p className="mt-8 text-gray-600">
           Showing {visibleBookmarks.length} bookmark
           {visibleBookmarks.length !== 1 && "s"}
         </p>
-
         <CommandMenu
           open={cmdOpen}
           setOpen={setCmdOpen}
           bookmarks={bookmarks}
-          folders={folders}
+          folders={folders.map(f => f.name)}
           tags={globalTags}
           onSelectBookmark={(bm: Bookmark) => {
             setEditingBookmark(bm);
@@ -530,7 +551,6 @@ export default function BookmarkApp() {
             setSelectedTag(tag);
           }}
         />
-
         <Toaster position="top-right" />
       </main>
 
@@ -593,8 +613,8 @@ export default function BookmarkApp() {
                 </SelectTrigger>
                 <SelectContent>
                   {folders.map((f) => (
-                    <SelectItem key={f} value={f}>
-                      {f}
+                    <SelectItem key={f.name} value={f.name}>
+                      {f.name}
                     </SelectItem>
                   ))}
                   <SelectItem value="__add">
@@ -705,6 +725,52 @@ export default function BookmarkApp() {
             </Button>
             <Button onClick={saveBookmark}>
               {editingBookmark ? "Save Changed" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={folderModalOpen} onOpenChange={setFolderModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Folder</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <label htmlFor="folderName">Folder Name</label>
+            <Input
+              id="folderName"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              placeholder="e.g. Reading List"
+            />
+          </div>
+          <div>
+            <label>Icon</label>
+            <IconPicker value={newFolderIcon} onValueChange={setNewFolderIcon} />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFolderModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!newFolderName) return;
+                if (folders.some((f) => f.name === newFolderName)) {
+                  toast("Folder name already exists");
+                  return;
+                }
+                setFolders([
+                  ...folders,
+                  { name: newFolderName, icon: newFolderIcon },
+                ]);
+                setFolder(newFolderName);
+                setNewFolderName("");
+                setNewFolderIcon("Folder");
+                setFolderModalOpen(false);
+              }}
+            >
+              Add Folder
             </Button>
           </DialogFooter>
         </DialogContent>
