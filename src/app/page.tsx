@@ -52,12 +52,9 @@ function toPascalCase(str: string) {
 function Icon({ name, ...props }: { name: string; className?: string }) {
   const safeName = toPascalCase(name);
 
-  console.log(`Trying to render icon: "${safeName}"`);
-
   const IconComponent = (Icons as any)[safeName];
 
   if (!IconComponent) {
-    console.warn(`Icon "${safeName}" not found, falling back to Folder.`);
     return <Icons.Folder {...props} />;
   }
 
