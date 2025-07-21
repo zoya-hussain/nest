@@ -355,47 +355,10 @@ export default function BookmarkApp() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="w-64 bg-white border-r p-6 flex flex-col ">
-        <h1 className="text-s font-bold mb-8">Bookmarks</h1>
-
-        <div className="flex-1 space-y-2">
-          {folders.map((f) => (
-            <Button
-              key={f.name}
-              variant={folder === f.name ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedTag(null);
-                setFolder(f.name);
-              }}
-            >
-              <Icon name={f.icon} className="h-4 w-4" />
-              {f.name}
-            </Button>
-          ))}
-        </div>
-
-        <Button
-          onClick={() => setFolderModalOpen(true)}
-          variant="outline"
-          className="w-full mt-6"
-        >
-          New Folder
-        </Button>
-
-        <Button
-          onClick={exportFolder}
-          variant="outline"
-          className="w-full mt-2"
-        >
-          Export Folder
-        </Button>
-      </aside>
-
-      <main className="flex-1 p-8 bg-gray-50 overflow-y-auto">
-        {" "}
+    <div className="min-h-screen">
+      {/* Remove the top row for New Folder/Export Folder buttons */}
+      <main className="p-8 bg-gray-50 overflow-y-auto min-h-screen">
+        { /* Optionally, move New Folder and Export Folder buttons here if needed */ }
         <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
           <div className="flex flex-1 gap-4">
             <Input
@@ -448,6 +411,14 @@ export default function BookmarkApp() {
             onClick={() => setShowArchived(!showArchived)}
           >
             {showArchived ? "Show Active" : "Show Archived"}
+          </Button>
+
+          {/* Add New Folder and Export Folder buttons here, in line with the others */}
+          <Button onClick={() => setFolderModalOpen(true)} variant="outline">
+            New Folder
+          </Button>
+          <Button onClick={exportFolder} variant="outline">
+            Export Folder
           </Button>
         </div>
         <div className="space-y-4">
