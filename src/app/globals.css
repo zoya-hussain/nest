@@ -45,8 +45,8 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.147 0.004 49.25);
+  --background: #F6F4F5;
+  --foreground: #222222;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.147 0.004 49.25);
   --popover: oklch(1 0 0);
@@ -79,8 +79,8 @@
 }
 
 .dark {
-  --background: oklch(0.147 0.004 49.25);
-  --foreground: oklch(0.985 0.001 106.423);
+  --background: #18181b;
+  --foreground: #f4f4f5;
   --card: oklch(0.216 0.006 56.043);
   --card-foreground: oklch(0.985 0.001 106.423);
   --popover: oklch(0.216 0.006 56.043);
@@ -118,5 +118,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    text-transform: capitalize;
   }
 }
