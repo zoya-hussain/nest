@@ -54,6 +54,15 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 
+function getFavicon(url: string) {
+  try {
+    const { hostname } = new URL(url);
+    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+  } catch {
+    return "";
+  }
+}
+
 function toPascalCase(str: string) {
   return str
     .replace(/[-_]+/g, " ")
@@ -370,247 +379,284 @@ export default function BookmarkApp() {
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <main className="p-8 bg-gray-50 overflow-y-auto min-h-screen">
-        <div className="border-b border-dotted border-gray-200 w-full">
-          <div className="flex items-center justify-between gap-3 px-3 py-3 w-full">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
-              <Input
-                ref={searchRef}
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setSelectedTag(null);
-                }}
-                className="w-full h-10 pl-8 pr-3 text-xs font-mono border border-dotted border-gray-300 rounded-none bg-white focus:outline-none focus:border-gray-400 transition-colors"
-              />
-            </div>
-            <button
-              onClick={() => setModalOpen(true)}
-              className="h-10 px-3 text-xs font-mono border border-dotted border-gray-300 bg-white hover:bg-gray-50 transition-all duration-200 group rounded-none flex items-center"
-            >
-              <Plus className="w-3.5 h-3.5 inline mr-1" />
-              New
-            </button>
-            <Select
-              value={sortOrder}
-              onValueChange={(v) => setSortOrder(v as "newest" | "oldest")}
-            >
-              <SelectTrigger className="w-10 h-10 flex items-center justify-center text-xs font-mono border border-dotted border-gray-300 bg-white rounded-none">
-                <ChevronDown className="w-4 h-4" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest to Oldest</SelectItem>
-                <SelectItem value="oldest">Oldest to Newest</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              className="w-10 h-10 flex items-center justify-center text-xs font-mono border border-dotted border-gray-300 bg-white hover:bg-gray-50 rounded-none"
-              onClick={() => setShowArchived(!showArchived)}
-            >
-              {showArchived ? (
-                <Archive className="w-4 h-4" />
-              ) : (
-                <Archive className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
-        </div>
-        {searchQuery === "" && globalTags.length > 0 && (
-          <div className="border-b border-dotted border-gray-200 w-full">
-            <div className="flex gap-1 flex-wrap px-3 py-2 w-full">
+        <div className="max-w-3xl mx-auto space-y-4">
+          <div className="w-full">
+            <div className="flex items-center justify-between gap-3 px-3 py-3 w-full">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                <Input
+                  ref={searchRef}
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setSelectedTag(null);
+                  }}
+                  className="w-full h-10 pl-8 pr-3 text-xs font-mono border border-dotted border-gray-300 rounded-none bg-white focus:outline-none focus:border-gray-400 transition-colors"
+                />
+              </div>
+
               <button
-                className={`px-2 py-1 text-xs font-mono border border-dotted border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors rounded-none ${
-                  selectedTag === null
-                    ? "bg-gray-50 text-gray-900"
-                    : "bg-white text-gray-600"
-                }`}
-                onClick={() => setSelectedTag(null)}
+                onClick={() => setModalOpen(true)}
+                className="h-10 px-3 text-xs font-mono border border-dotted border-gray-300 bg-white hover:bg-gray-50 transition-all duration-200 group rounded-none flex items-center"
               >
-                all
+                <Plus className="w-3.5 h-3.5 inline mr-1" />
+                New
               </button>
-              {globalTags.map((tag) => (
+              <Select
+                value={sortOrder}
+                onValueChange={(v) => setSortOrder(v as "newest" | "oldest")}
+              >
+                <SelectTrigger className="w-10 h-10 flex items-center justify-center text-xs font-mono border border-dotted border-gray-300 bg-white rounded-none">
+                  <ChevronDown className="w-4 h-4" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest to Oldest</SelectItem>
+                  <SelectItem value="oldest">Oldest to Newest</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                className="w-10 h-10 flex items-center justify-center text-xs font-mono border border-dotted border-gray-300 bg-white hover:bg-gray-50 rounded-none"
+                onClick={() => setShowArchived(!showArchived)}
+              >
+                {showArchived ? (
+                  <Archive className="w-4 h-4" />
+                ) : (
+                  <Archive className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+            <div className="w-full py-2 px-3 flex gap-2 overflow-x-auto">
+              {folders.map((f) => (
                 <button
-                  key={tag}
-                  className={`px-2 py-1 text-xs font-mono border border-dotted border-gray-300 hover:bg-gray-50 transition-colors rounded-none ${
-                    selectedTag === tag
-                      ? "bg-gray-50 text-gray-900"
-                      : "bg-white text-gray-600"
-                  }`}
-                  onClick={() => setSelectedTag(tag)}
+                  key={f.name}
+                  onClick={() => {
+                    setSelectedTag(null);
+                    setSearchQuery("");
+                    setFolder(f.name);
+                  }}
+                  className={`flex items-center gap-1 px-2 py-1 text-xs font-mono rounded-none transition-colors
+        ${
+          folder === f.name
+            ? "bg-gray-900 text-white "
+            : "bg-white text-gray-700 hover:bg-gray-100"
+        }
+      `}
                 >
-                  {tag}
+                  <Icon name={f.icon} className="w-3.5 h-3.5" />
+                  {f.name}
                 </button>
               ))}
             </div>
           </div>
-        )}
-        <div className="w-full px-0 py-3">
-          <div className="space-y-2 w-full">
-            {visibleBookmarks.map((bookmark) => (
-              <div
-                key={bookmark.id}
-                className="group border border-dotted border-gray-300 bg-white hover:border-gray-400 transition-all duration-200 relative w-full"
-              >
-                <div className="absolute -top-1 -left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <Plus className="w-2 h-2 text-gray-400" />
-                </div>
-                <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <Plus className="w-2 h-2 text-gray-400" />
-                </div>
-                <div className="absolute -bottom-1 -left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <Plus className="w-2 h-2 text-gray-400" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <Plus className="w-2 h-2 text-gray-400" />
-                </div>
+          {searchQuery === "" && globalTags.length > 0 && (
+            <div className=" w-full">
+              <div className="flex gap-1 flex-wrap px-3 py-2 w-full">
+                <button
+                  className={`px-2 py-1 text-xs font-mono border bg-gray-50 hover:bg-gray-100 transition-colors rounded-none ${
+                    selectedTag === null
+                      ? "bg-gray-50 text-gray-900"
+                      : "bg-white text-gray-600"
+                  }`}
+                  onClick={() => setSelectedTag(null)}
+                >
+                  All
+                </button>
+                {globalTags.map((tag) => (
+                  <button
+                    key={tag}
+                    className={`px-2 py-1 text-xs font-mono border  hover:bg-gray-50 transition-colors rounded-none ${
+                      selectedTag === tag
+                        ? "bg-gray-50 text-gray-900"
+                        : "bg-white text-gray-600"
+                    }`}
+                    onClick={() => setSelectedTag(tag)}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="w-full px-3 py-3">
+            <div className="space-y-2 w-full">
+              {visibleBookmarks.map((bookmark) => (
+                <div
+                  key={bookmark.id}
+                  className="group border border-dotted border-gray-300 bg-white hover:border-gray-400 transition-all duration-200 relative w-full"
+                >
+                  <div className="absolute -top-1 -left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Plus className="w-2 h-2 text-gray-600" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Plus className="w-2 h-2 text-gray-600" />
+                  </div>
+                  <div className="absolute -bottom-1 -left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Plus className="w-2 h-2 text-gray-600" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Plus className="w-2 h-2 text-gray-600" />
+                  </div>
 
-                <div className="p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <a
-                          href={bookmark.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors truncate"
-                        >
-                          {bookmark.title}
-                        </a>
-                        <ExternalLink className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-
-                      <div className="flex items-center gap-3 text-xs font-mono text-gray-500 leading-tight">
-                        <span className="truncate">{bookmark.url}</span>
-                        <span>•</span>
-                        <span>{bookmark.folder}</span>
-                        <span>•</span>
-                        <span>{bookmark.createdAt.toLocaleDateString()}</span>
-                      </div>
-
-                      <div className="flex gap-1 mt-2">
-                        {bookmark.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-1.5 py-0.5 text-xs font-mono bg-gray-100 text-gray-600 border border-dotted border-gray-300"
+                  <div className="p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <img
+                            src={getFavicon(bookmark.url)}
+                            alt=""
+                            className="w-4 h-4 rounded"
+                          />
+                          <a
+                            href={bookmark.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors truncate"
                           >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                            {bookmark.title}
+                          </a>
+                          <ExternalLink className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
 
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingBookmark(bookmark);
-                          setTitle(bookmark.title);
-                          setUrl(bookmark.url);
-                          setFolder(bookmark.folder);
-                          setRemindAt(bookmark.remindAt);
-                          setTags(bookmark.tags);
-                          setNotes(bookmark.notes || "");
-                          setModalOpen(true);
-                        }}
-                        className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          const newArchived = !bookmark.isArchived;
-                          setBookmarks(
-                            bookmarks.map((bm) =>
-                              bm.id === bookmark.id
-                                ? { ...bm, isArchived: newArchived }
-                                : bm
-                            )
-                          );
-                          lastAction.current = () => {
+                        <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-gray-500 leading-tight">
+                          <div className="flex items-center gap-1">
+                            <Folder className="w-3 h-3 opacity-70" />
+                            <span>{bookmark.folder}</span>
+                          </div>
+                          <span>•</span>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3 opacity-70" />
+                            <span>
+                              {bookmark.createdAt.toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {bookmark.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-1.5 py-0.5 text-xs font-mono bg-gray-100 text-gray-600 border border-dotted border-gray-300"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingBookmark(bookmark);
+                            setTitle(bookmark.title);
+                            setUrl(bookmark.url);
+                            setFolder(bookmark.folder);
+                            setRemindAt(bookmark.remindAt);
+                            setTags(bookmark.tags);
+                            setNotes(bookmark.notes || "");
+                            setModalOpen(true);
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => {
+                            const newArchived = !bookmark.isArchived;
                             setBookmarks(
                               bookmarks.map((bm) =>
                                 bm.id === bookmark.id
-                                  ? { ...bm, isArchived: bookmark.isArchived }
+                                  ? { ...bm, isArchived: newArchived }
                                   : bm
                               )
                             );
-                          };
-                          toast(newArchived ? "Archived" : "Unarchived", {
-                            action: {
-                              label: "Undo",
-                              onClick: () => {
-                                lastAction.current?.();
-                                lastAction.current = null;
+                            lastAction.current = () => {
+                              setBookmarks(
+                                bookmarks.map((bm) =>
+                                  bm.id === bookmark.id
+                                    ? { ...bm, isArchived: bookmark.isArchived }
+                                    : bm
+                                )
+                              );
+                            };
+                            toast(newArchived ? "Archived" : "Unarchived", {
+                              action: {
+                                label: "Undo",
+                                onClick: () => {
+                                  lastAction.current?.();
+                                  lastAction.current = null;
+                                },
                               },
-                            },
-                          });
-                        }}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Archive className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => deleteBookmark(bookmark)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                            });
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Archive className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => deleteBookmark(bookmark)}
+                          className="p-1.5 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+
+          <CommandMenu
+            open={cmdOpen}
+            setOpen={setCmdOpen}
+            bookmarks={bookmarks}
+            folders={folders.map((f) => f.name)}
+            tags={globalTags}
+            onSelectBookmark={(bm: Bookmark) => {
+              setEditingBookmark(bm);
+              setTitle(bm.title);
+              setUrl(bm.url);
+              setFolder(bm.folder);
+              setRemindAt(bm.remindAt);
+              setTags(bm.tags);
+              setNotes(bm.notes || "");
+              setModalOpen(true);
+            }}
+            onFilterFolder={(folder: string) => {
+              setSearchQuery("");
+              setSelectedTag(null);
+              setFolder(folder);
+            }}
+            onFilterTag={(tag: string) => {
+              setSearchQuery("");
+              setSelectedTag(tag);
+            }}
+          />
+          <Toaster
+            position="bottom-center"
+            theme="light"
+            visibleToasts={1}
+            gap={14}
+            toastOptions={{
+              style: {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                fontSize: "0.8rem",
+                width: "80%",
+              },
+            }}
+          />
         </div>
-        <CommandMenu
-          open={cmdOpen}
-          setOpen={setCmdOpen}
-          bookmarks={bookmarks}
-          folders={folders.map((f) => f.name)}
-          tags={globalTags}
-          onSelectBookmark={(bm: Bookmark) => {
-            setEditingBookmark(bm);
-            setTitle(bm.title);
-            setUrl(bm.url);
-            setFolder(bm.folder);
-            setRemindAt(bm.remindAt);
-            setTags(bm.tags);
-            setNotes(bm.notes || "");
-            setModalOpen(true);
-          }}
-          onFilterFolder={(folder: string) => {
-            setSearchQuery("");
-            setSelectedTag(null);
-            setFolder(folder);
-          }}
-          onFilterTag={(tag: string) => {
-            setSearchQuery("");
-            setSelectedTag(tag);
-          }}
-        />
-        <Toaster
-          position="bottom-center"
-          theme="light"
-          visibleToasts={1}
-          gap={14}
-          toastOptions={{
-            style: {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              textAlign: "center",
-              fontSize: "0.8rem",
-              width: "80%",
-            },
-          }}
-        />
       </main>
 
       <Dialog
@@ -681,14 +727,6 @@ export default function BookmarkApp() {
                   </SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div>
-              <label htmlFor="remind">Remind me on</label>
-              <div className="flex items-center space-x-2">
-                <CalendarIcon />
-                <DatePicker date={remindAt} setDate={setRemindAt} />
-              </div>
             </div>
 
             <div>
@@ -764,18 +802,6 @@ export default function BookmarkApp() {
                   </Command>
                 </PopoverContent>
               </Popover>
-            </div>
-
-            <div>
-              <label htmlFor="notes">Notes</label>
-              <textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full p-2 border rounded-md"
-                rows={3}
-                placeholder="Add any notes about this bookmark..."
-              />
             </div>
           </div>
           <DialogFooter>
