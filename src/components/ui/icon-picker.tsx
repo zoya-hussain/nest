@@ -5,7 +5,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Button } from "./button";
 import { Input } from "./input";
-import { cn } from "../../lib/utils";
+import { cn } from "lib/utils";
 import { LucideProps, LucideIcon } from 'lucide-react';
 import { DynamicIcon, IconName } from 'lucide-react/dynamic';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
