@@ -67,16 +67,19 @@ function toPascalCase(str: string) {
     .replace(/^(.)/, (_, chr) => chr.toUpperCase());
 }
 
+import { LucideIcon } from "lucide-react";
+
 function Icon({ name, ...props }: { name: string; className?: string }) {
   const safeName = toPascalCase(name);
+  const LucideIconComponent = Icons[
+    safeName as keyof typeof Icons
+  ] as LucideIcon;
 
-  const IconComponent = (Icons as any)[safeName];
-
-  if (!IconComponent) {
+  if (!LucideIconComponent) {
     return <Icons.Folder {...props} />;
   }
 
-  return <IconComponent {...props} />;
+  return <LucideIconComponent {...props} />;
 }
 
 function usePersistentState<T>(key: string, initial: T) {
@@ -130,7 +133,7 @@ export default function BookmarkApp() {
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchived, setShowArchived] = useState(false);
-  const lastAction = useRef<any>(null);
+  const lastAction = useRef<(() => void) | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [notes, setNotes] = useState("");
