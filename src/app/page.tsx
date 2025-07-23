@@ -21,7 +21,6 @@ import {
   ExternalLink,
   ChevronDown,
   Folder,
-  X,
 } from "lucide-react";
 import { IconName } from "lucide-react/dynamic";
 
@@ -135,65 +134,6 @@ export default function BookmarkApp() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [notes, setNotes] = useState("");
-  const exportFolder = () => {
-    const folderBookmarks = bookmarks.filter(
-      (b) => b.folder === folder && !b.isArchived
-    );
-
-    if (folderBookmarks.length === 0) {
-      toast("No bookmarks in this folder to export.");
-      return;
-    }
-    const htmlContent = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>${folder} - Exported Bookmarks</title>
-  <style>
-    body { font-family: sans-serif; padding: 2rem; }
-    h1 { font-size: 1.5rem; }
-    ul { list-style: none; padding: 0; }
-    li { margin-bottom: 0.75rem; }
-    a { color: #0070f3; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    p { color: #555; margin: 0.25rem 0; }
-    small { color: #999; }
-  </style>
-</head>
-<body>
-  <h1>Folder: ${folder}</h1>
-  <ul>
-    ${folderBookmarks
-      .map(
-        (b) => `
-      <li>
-        <a href="${b.url}" target="_blank">${b.title}</a><br/>
-        <p>${b.url}</p>
-        ${b.notes ? `<p><em>${b.notes}</em></p>` : ""}
-        ${
-          b.tags.length
-            ? `<p>Tags: ${b.tags.map((t) => `#${t}`).join(", ")}</p>`
-            : ""
-        }
-      </li>
-    `
-      )
-      .join("")}
-  </ul>
-</body>
-</html>
-`;
-
-    const blob = new Blob([htmlContent], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${folder.replace(/\s+/g, "_")}_bookmarks.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   const visibleBookmarks = (
     searchQuery
@@ -792,7 +732,7 @@ export default function BookmarkApp() {
                               }
                             }}
                           >
-                            + Add "{tagInput.trim()}"
+                            + Add &quot;{tagInput.trim()}&quot;
                           </CommandItem>
                         )}
                     </CommandList>

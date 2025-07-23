@@ -15,8 +15,6 @@ import {
   Folder, 
   Tag, 
   ExternalLink,
-  Calendar,
-  Archive,
   Plus,
   ChevronRight
 } from "lucide-react";
@@ -97,7 +95,7 @@ export default function CommandMenu({
           <Command.List className="max-h-[380px] overflow-y-auto">
             <Command.Empty className="p-4 text-center">
               <div className="text-gray-400 text-sm font-mono">
-                No results found for "{search}"
+                No results found for &quot;{search}&quot;
               </div>
               <div className="text-xs text-gray-300 mt-0.5">
                 Try searching for bookmarks, folders, or tags
