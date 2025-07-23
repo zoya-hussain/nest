@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/command";
 import { IconPicker } from "@/components/ui/icon-picker";
 import * as Icons from "lucide-react";
-import { CalendarIcon, PlusIcon, Trash2Icon, Check, Plus } from "lucide-react";
+import { PlusIcon, Check, Plus } from "lucide-react";
 import {
   Search,
   Archive,
@@ -19,9 +19,7 @@ import {
   Trash2,
   Calendar,
   ExternalLink,
-  Image,
   ChevronDown,
-  ChevronUp,
   Folder,
   X,
 } from "lucide-react";
@@ -44,7 +42,6 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
 import { v4 as uuid } from "uuid";
 import { Toaster, toast } from "sonner";
 
