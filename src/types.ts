@@ -3,7 +3,7 @@ export type Bookmark = {
   title: string;
   url: string;
   folder: string;
-  remindAt: Date;
+  remindAt?: Date;
   createdAt: Date;
   tags: string[];
   isArchived?: boolean;

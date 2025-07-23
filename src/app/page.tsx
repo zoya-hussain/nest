@@ -194,7 +194,7 @@ export default function BookmarkApp() {
       prev.map((b) => ({
         ...b,
         createdAt: new Date(b.createdAt),
-        remindAt: new Date(b.remindAt),
+        remindAt: b.remindAt ? new Date(b.remindAt) : undefined,
       }))
     );
   }, []);
@@ -244,7 +244,7 @@ export default function BookmarkApp() {
   }, [handleKeyDown]);
 
   const saveBookmark = () => {
-    if (!title || !url || !remindAt) return;
+    if (!title || !url) return;
 
     if (editingBookmark) {
       const updated = bookmarks.map((b) =>
