@@ -139,20 +139,21 @@ export default function BookmarkApp() {
   const [cmdOpen, setCmdOpen] = useState(false);
   const [notes, setNotes] = useState("");
 
-  const searchParams = useSearchParams();
-
   useEffect(() => {
-    const addParam = searchParams?.get("add");
-    if (addParam) {
-      setUrl(decodeURIComponent(addParam));
-      setTitle("");
-      setRemindAt(undefined);
-      setFolder("General");
-      setTags([]);
-      setModalOpen(true);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const addParam = params.get("add");
+      if (addParam) {
+        setUrl(decodeURIComponent(addParam));
+        setTitle("");
+        setRemindAt(undefined);
+        setFolder("General");
+        setTags([]);
+        setModalOpen(true); 
+      }
     }
-  }, [searchParams]);
-
+  }, []);
+  
   if (typeof window !== "undefined") {
   }
 
