@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import CommandMenu from "@/CommandMenu";
+import { useSearchParams } from "next/navigation";
 import {
   Command,
   CommandEmpty,
@@ -137,6 +138,23 @@ export default function BookmarkApp() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [notes, setNotes] = useState("");
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const addParam = searchParams?.get("add");
+    if (addParam) {
+      setUrl(decodeURIComponent(addParam));
+      setTitle("");
+      setRemindAt(undefined);
+      setFolder("General");
+      setTags([]);
+      setModalOpen(true);
+    }
+  }, [searchParams]);
+
+  if (typeof window !== "undefined") {
+  }
 
   const visibleBookmarks = (
     searchQuery
