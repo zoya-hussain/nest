@@ -148,11 +148,26 @@ export default function BookmarkApp() {
         setRemindAt(undefined);
         setFolder("General");
         setTags([]);
-        setModalOpen(true); 
+        setModalOpen(true);
       }
     }
   }, []);
-  
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (
+        event.data &&
+        event.data.type === "SYNC_BOOKMARKS" &&
+        Array.isArray(event.data.bookmarks)
+      ) {
+        localStorage.setItem("bookmarks", JSON.stringify(event.data.bookmarks));
+        window.location.reload();
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
   if (typeof window !== "undefined") {
   }
 
