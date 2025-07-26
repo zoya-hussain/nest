@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import CommandMenu from "@/CommandMenu";
-import { useSearchParams } from "next/navigation";
 import {
   Command,
   CommandEmpty,
